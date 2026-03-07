@@ -1,16 +1,38 @@
 import { createStackNavigator } from '@react-navigation/stack';
+import { View, StyleSheet } from 'react-native';
+import HomeScreen from '../screens/HomeScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import { ROUTES } from '../utils';
+import BottomNav from '../components/BottomNav';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
 const Stack = createStackNavigator();
 
-import HomeScreen from '../screens/HomeScreen'
-import ProfileScreen from '../screens/ProfileScreen'
-import Login from '../screens/auth/Login'
-import { ROUTES } from '../utils';
+export default function MainNavigation() {
+  return (
+    <View style={styles.container}>
+      {/* The Stack handles the screen transitions */}
+      <View style={styles.content}>
+        <Stack.Navigator 
+          initialRouteName={ROUTES.HOME}
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name={ROUTES.HOME} component={HomeScreen} />
+          <Stack.Screen name={ROUTES.PROFILE} component={ProfileScreen} />
+        </Stack.Navigator>
+      </View>
 
-export default function MainNavigation () {
-    return (
-      <Stack.Navigator initialRouteName={ROUTES.HOME}>
-        <Stack.Screen name={ROUTES.HOME} component={HomeScreen} />
-        <Stack.Screen name={ROUTES.PROFILE} component={ProfileScreen} />
-      </Stack.Navigator>
-    )
-  }
+      {/* The BottomNav stays fixed at the bottom */}
+      <BottomNav />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1, // Takes up all space except what BottomNav uses
+  },
+});
