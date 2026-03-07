@@ -5,12 +5,15 @@ import { useNavigation } from '@react-navigation/native';
 import { ROUTES } from '../../utils';
 import { IMG } from '../../utils';
 import CustomButton from '../../components/CustomButton';
+import { useDispatch } from 'react-redux';
+import { authLogin } from '../../app/action';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   return (
     <View
@@ -21,7 +24,6 @@ export default function Login() {
         height: '100%',
       }}
     >
-      
       <Image
         source={IMG.LOGO}
         style={{
@@ -98,7 +100,8 @@ export default function Login() {
             color: 'white',
           }}
           onPress={() => {
-            Alert.alert('Credentials', `u: ${username} p: ${password} `);
+            console.log('Credentials', `u: ${username} p: ${password} `);
+            dispatch(authLogin({ username, password }));
           }}
         />
       </View>
