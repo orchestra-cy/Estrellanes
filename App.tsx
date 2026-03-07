@@ -2,6 +2,7 @@
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNav from './src/navigations'
+import "./global.css"
 
 function App() {
   return (
