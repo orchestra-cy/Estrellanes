@@ -14,7 +14,7 @@ runSaga(rootSaga);
 
 function GateContent() {
   const auth = useSelector(state => state.auth || {});
-  console.log(auth)
+  console.log("auth status",auth)
   const hasAuth = Boolean(
    auth.token
   );
