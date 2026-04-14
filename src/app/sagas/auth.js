@@ -15,6 +15,17 @@ export function* userLoginAsync(action) {
     yield put({ type: USER_LOGIN_REQUEST });
     console.log('USER_LOGIN_REQUEST');
     const result = yield call(UserLogin, action.payload);
+    // const result = { 
+    //   ok : true,
+    //   data : {
+    //     token: 'fake-jwt-token',
+    //     user: {
+    //       id: 1,
+    //       name: 'John Doe',
+    //       email: 'john.doe@example.com'
+    //     }
+    //   }
+    // };
     console.log("result is: ",result)
     if (result) {
       if (result.ok === true) {
@@ -54,23 +65,23 @@ export function* userLoginAsync(action) {
   }
 }
 
-export function* userLogoutAsync() {
-  try {
-    // console.log('USER_LOGOUT - performing cleanup');
-    console.log('USER_LOGOUT');
-    yield call(AsyncStorage.removeItem, 'persist:root');
+// export function* userLogoutAsync() {
+//   try {
+//     // console.log('USER_LOGOUT - performing cleanup');
+//     console.log('USER_LOGOUT');
+//     // yield call(AsyncStorage.removeItem, 'persist:root');
 
-    yield call(AsyncStorage.removeItem, 'persist:auth');
+//     // yield call(AsyncStorage.removeItem, 'persist:auth');
 
-  } catch (error) {
-    console.log('Error during logout cleanup:', error);
-  }
-}
+//   } catch (error) {
+//     console.log('Error during logout cleanup:', error);
+//   }
+// }
 
 export function* userLoginAction() {
   yield takeLatest(USER_LOGIN, userLoginAsync);
 }
 
-export function* userLogoutAction() {
-  yield takeLatest(USER_LOGOUT, userLogoutAsync);
-}
+// export function* userLogoutAction() {
+//   yield takeLatest(USER_LOGOUT, userLogoutAsync);
+// }

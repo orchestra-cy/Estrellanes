@@ -4,6 +4,6 @@ import { userLoginAction, userLogoutAction } from './auth';
 export default function* rootSaga() {
   yield all([
     userLoginAction(),
-    userLogoutAction(),
+    // userLogoutAction(),
   ]);
 }
