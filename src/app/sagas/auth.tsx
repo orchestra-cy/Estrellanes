@@ -7,29 +7,24 @@ import {
   USER_LOGOUT,
 } from '../action';
 import { UserLogin } from '../api/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export function* userLoginAsync(action) {
+import { LoginDOT } from '../../types/api.auth.types';
+import { UserLoginAction } from '../../types/reducer.auth.types';
+import { UserLoginResult } from '../../types/api.user.types';
+
+export function* userLoginAsync(action: UserLoginAction) {
   try {
     console.log('USER_LOGIN');
     yield put({ type: USER_LOGIN_REQUEST });
     console.log('USER_LOGIN_REQUEST');
-    const result = yield call(UserLogin, action.payload);
-    // const result = { 
-    //   ok : true,
-    //   data : {
-    //     token: 'fake-jwt-token',
-    //     user: {
-    //       id: 1,
-    //       name: 'John Doe',
-    //       email: 'john.doe@example.com'
-    //     }
-    //   }
-    // };
-    console.log("result is: ",result)
+    const payload_login: LoginDOT = action.payload;
+    const result: UserLoginResult = yield call(UserLogin, payload_login);
+    console.log('the result is', result);
     if (result) {
       if (result.ok === true) {
-        const payload = result.data || { token: result.token };
+        const payload: { token: string } = { token: result.token };
+        console.log('Login successful, payload:', result.token);
         console.log('USER_LOGIN_SUCCESS');
         yield put({ type: USER_LOGIN_SUCCESS, payload });
         return;
@@ -37,18 +32,7 @@ export function* userLoginAsync(action) {
         console.log('USER_LOGIN_FAILURE');
       }
 
-      const token = result.token || null;
-      const dataPayload = result.data || result;
-      if (token || dataPayload) {
-        const payload = { ...(dataPayload || {}), token: token || undefined };
-        yield put({ type: USER_LOGIN_SUCCESS, payload });
-        return;
-      }
-
-      const message =
-        result.error ||
-        (result.data && (result.data.message || result.data.error)) ||
-        'Invalid credentials';
+      const message: string = (result.error ? result.error : 'Invalid credentials');
       yield put({ type: USER_LOGIN_FAILURE, error: message });
       console.log('USER_LOGIN_FAILURE');
       return;
@@ -59,7 +43,7 @@ export function* userLoginAsync(action) {
   } catch (error) {
     yield put({
       type: USER_LOGIN_FAILURE,
-      error: error?.message || 'An unexpected error occurred',
+      error: error || 'An unexpected error occurred',
     });
     console.log('USER_LOGIN_FAILURE');
   }

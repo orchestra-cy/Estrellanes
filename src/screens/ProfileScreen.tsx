@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { UserInfo } from '../types/api.user.types';
 import {
   View,
   Text,
@@ -7,18 +8,24 @@ import {
   SafeAreaView,
   TextInput,
 } from 'react-native';
+
+
 import { useDispatch } from 'react-redux';
 import { authLogout } from '../app/action';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { GetUserInfo, ChangePassword } from '../app/api/user';
 import { Alert, ActivityIndicator } from 'react-native';
 
+
+import { ChangePassDOT } from '../types/api.user.types';
+
+
 export default function ProfileScreen() {
   const dispatch = useDispatch();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const [userInfo, setUserInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState<UserInfo>();
+  const [loading, setLoading] = useState<boolean>(true);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -29,7 +36,8 @@ export default function ProfileScreen() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const r = await GetUserInfo();
+        const r: UserInfo = await GetUserInfo();
+        console.log(r);
         setUserInfo(r);
       } catch (e) {
         console.error(e);
@@ -40,7 +48,7 @@ export default function ProfileScreen() {
     fetchUser();
   }, []);
 
-  const getRoleDisplay = roles => {
+  const getRoleDisplay = (roles: string[] | undefined) => {
     if (!roles || roles.length === 0) return 'User';
     const roleString = Array.isArray(roles) ? roles[0] : roles;
     if (typeof roleString === 'string' && roleString.includes('ADMIN'))
@@ -55,11 +63,12 @@ export default function ProfileScreen() {
     }
 
     try {
-      const result = await ChangePassword(
-        passwordData.currentPassword,
-        passwordData.newPassword,
-        passwordData.confirmPassword,
-      );
+      const payload: ChangePassDOT = {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword,
+      };
+      const result = await ChangePassword(payload);
 
       if (result.status === 'ok') {
         setIsChangingPassword(false);
@@ -73,7 +82,7 @@ export default function ProfileScreen() {
         Alert.alert('Error', result.message || 'Make sure passwords match!');
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred.');
+      Alert.alert('Error', 'An unexpected error occurred.' + error);
     }
   };
 

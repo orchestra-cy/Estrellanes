@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { HistoryDOT } from '../../types/history.types';
 
 const BaseUrl = 'http://127.0.0.1:8000/api';
 
@@ -19,8 +20,8 @@ const getToken = async () => {
   }
 };
 
-export async function GetUserInfo() {
-  const url = `${BaseUrl}/get-user-info`;
+export async function FetchAppointment() {
+  const url = `${BaseUrl}/get-appointment`;
   try {
     const token = await getToken();
     const res = await fetch(url, {
@@ -32,20 +33,21 @@ export async function GetUserInfo() {
     });
 
     if (!res.ok) {
-      throw new Error(`GetUserInfo failed with status ${res.status}`);
+      throw new Error(`FetchAppointment failed with status ${res.status}`);
     }
 
     const data = await res.json();
+    console.log("Appointment data:", data);
     return data;
   } catch (error) {
-    console.log('GetUserInfo error:', error);
-    throw error;
+    console.log('FetchAppointment error:', error);
+    return { status: 'error', appointments: [] };
   }
 }
 
-export async function ChangePassword(currentPassword, newPassword, confirmPassword) {
-  const url = `${BaseUrl}/change-pass`;
-  console.log('data send change password: ', { currentPassword, newPassword, confirmPassword })
+export async function fetchHistory({ userID, role }: HistoryDOT) {
+  console.log("fetching history")
+  const url = `${BaseUrl}/get-history`;
   try {
     const token = await getToken();
     const res = await fetch(url, {
@@ -54,18 +56,17 @@ export async function ChangePassword(currentPassword, newPassword, confirmPasswo
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        currentPassword,
-        newPassword,
-        confirmPassword,
-      }),
+      body: JSON.stringify({ userID, role }),
     });
 
+    if (!res.ok) {
+        throw new Error(`fetchHistory failed with status ${res.status}`);
+    }
+
     const data = await res.json();
-    console.log("the data respone by server: ",data)
     return data;
   } catch (error) {
-    console.log('ChangePassword error:', error);
-    return { status: 'error', message: error.message };
+    console.log('fetchHistory error:', error);
+    return { status: 'error', data: [] };
   }
 }

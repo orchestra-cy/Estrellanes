@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { fetchHistory } from '../app/api/appointment';
+import type { HistoryDOT } from '../types/history.types';
 import {
   View,
   Text,
@@ -10,11 +11,31 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default function HistoryScreen() {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const auth = useSelector(state => state.auth);
+interface HistoryItem {
+  action?: string;
+  logged_at: string | number | Date;
+  actor_type?: string;
+  patient_first_name?: string;
+  patient_last_name?: string;
+  dentist_first_name?: string;
+  dentist_last_name?: string;
+}
 
+interface RootState {
+  auth: {
+    userData?: {
+      id: string;
+      roles: string | string[];
+    };
+  };
+}
+
+export default function HistoryScreen() {
+  console.log('history screen');
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const auth = useSelector((state: RootState) => state.auth);
+  console.log('auth', auth);
   useEffect(() => {
     const fetchData = async () => {
       if (!auth?.userData?.id) {
@@ -27,11 +48,20 @@ export default function HistoryScreen() {
         const roleRaw = auth.userData.roles;
         const role = Array.isArray(roleRaw) ? roleRaw[0] : roleRaw;
         const normalizedRole = role
-          ? role.replace(/[\[\]"]+/g, '').replace('ROLE_', '')
+          ? String(role)
+              .replace(/[[\]"]+/g, '')
+              .replace('ROLE_', '')
           : 'USER';
 
-        const response = await fetchHistory(auth.userData.id, normalizedRole);
+        const payload: HistoryDOT = {
+          userID: auth.userData.id,
+          role: normalizedRole,
+        };
+        const response = await fetchHistory(payload);
+        console.log('history ya');
+        console.log(response);
         if (response?.status === 'ok') {
+          console.log(response.data);
           setHistory(response.data || []);
         } else {
           setHistory([]);
@@ -44,7 +74,7 @@ export default function HistoryScreen() {
     };
 
     fetchData();
-  }, [auth]);
+  }, [auth?.userData?.id, auth?.userData?.roles]);
 
   if (loading) {
     return (

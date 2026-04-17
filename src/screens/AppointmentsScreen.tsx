@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FetchAppointment } from '../app/api/appointment';
+import { AppointmentDOT } from '../types/screen.appointment.types';
 import {
   View,
   Text,
@@ -11,9 +12,9 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function AppointmentsScreen() {
-  const [appointmentsData, setAppointmentsData] = useState([]);
+  const [appointmentsData, setAppointmentsData] = useState<AppointmentDOT>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,6 +22,7 @@ export default function AppointmentsScreen() {
       try {
         const data = await FetchAppointment();
         if (data && data.status === 'ok' && Array.isArray(data.appointments)) {
+          console.log(data.appointments)
           setAppointmentsData(data.appointments);
         } else {
           setAppointmentsData([]);

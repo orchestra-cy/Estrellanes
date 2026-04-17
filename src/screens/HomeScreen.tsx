@@ -8,15 +8,9 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
-import { ROUTES } from '../utils';
-import Name from '../components/Name'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function HomeScreen() {
-  const navigate = useNavigation();
-  const dispatch = useDispatch();
 
   const quickLinks = [
     { label: 'Book Visit', icon: 'calendar-check' },
@@ -33,12 +27,6 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-
-
-
-
-
-
         {/* GREETING SECTION */}
         <View className="px-5 mt-4">
           <Text className="text-sm text-slate-500 font-medium">
@@ -48,17 +36,6 @@ export default function HomeScreen() {
             Clint
           </Text>
         </View>
-
-        <View
-        className='flex item-center justify-center'
-        >
-            <Name 
-              label={"Clint "}
-              />
-        </View>
-
-  
-
 
         {/* SEARCH BAR */}
         <View className="flex-row items-center bg-white mx-5 mt-5 rounded-2xl px-4 h-14 shadow-sm elevation-2">

@@ -1,4 +1,6 @@
-export async function UserLogin({ username, password }) {
+import { LoginDOT,RegisterDOT } from "../../types/api.auth.types";
+
+export async function UserLogin({ username, password }: LoginDOT) {
   const BaseUrl = 'http://127.0.0.1:8000/api';
   const url = `${BaseUrl}/login-auth`;
 
@@ -21,7 +23,9 @@ export async function UserLogin({ username, password }) {
     try {
       data = await res.json();
       console.log(data);
-    } catch (e) {}
+    } catch (e) {
+      console.log(e)
+    }
 
     const token = data?.token || null;
 
@@ -32,18 +36,18 @@ export async function UserLogin({ username, password }) {
       ok: false,
       status: null,
       data: null,
-      error: error.message || String(error),
+      error: error?.message || String(error),
     };
   }
 }
 
 export async function RegisterUser(
-  email,
-  password,
-  username,
-  first_name,
-  last_name,
-  created_at,
+  { email,
+    password,
+    username,
+    first_name,
+    last_name,
+    created_at }: RegisterDOT
 ) {
   console.log('[API] Sending data to register: ', {
     email,
@@ -68,7 +72,7 @@ export async function RegisterUser(
         password,
         username,
         first_name,
-        last_name,
+        last_name,  
         created_at,
       }),
     });

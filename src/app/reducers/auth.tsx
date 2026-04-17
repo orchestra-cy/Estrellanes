@@ -5,14 +5,23 @@ import {
   USER_LOGOUT,
 } from '../action';
 
-const initialState = {
-  userData: null, 
-  token: null, 
+import {
+  AuthAction,
+  AuthState,
+  AuthPayload,
+} from '../../types/reducer.auth.types';
+
+const initialState: AuthState = {
+  userData: null,
+  token: null,
   isLoading: false,
-  error: null, 
+  error: null,
 };
 
-export default function authReducer(state = initialState, action) {
+export default function authReducer(
+  state: AuthState = initialState,
+  action: AuthAction,
+): AuthState {
   switch (action.type) {
     case USER_LOGIN_REQUEST:
       return {
@@ -22,11 +31,17 @@ export default function authReducer(state = initialState, action) {
       };
 
     case USER_LOGIN_SUCCESS: {
-      const payload = action.payload || {};
+      const payload: AuthPayload = action.payload || {};
       const token =
-        payload.token || payload.access_token || payload?.data?.token || null;
+        payload.token ||
+        payload.access_token ||
+        ((payload.data as { token?: string | null } | null | undefined)
+          ?.token ??
+          null);
       const user =
-        payload.user || payload.data || (payload && !token ? payload : null);
+        payload.user ||
+        payload.data ||
+        ((payload && !token ? payload : null) as AuthState['userData']);
 
       return {
         ...state,
@@ -38,14 +53,17 @@ export default function authReducer(state = initialState, action) {
     }
 
     case USER_LOGIN_FAILURE: {
-      const errorMessage = action.error || action.payload || 'Login failed';
+      const errorMessage =
+        action.error ||
+        (typeof action.payload === 'string' ? action.payload : null) ||
+        'Login failed';
       return {
         ...state,
         isLoading: false,
         error: errorMessage,
       };
     }
-      // custom
+    // custom
     case USER_LOGOUT: {
       return {
         ...state,

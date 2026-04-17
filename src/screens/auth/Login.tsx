@@ -15,6 +15,9 @@ import { useDispatch } from 'react-redux';
 import { ROUTES, IMG } from '../../utils';
 import { authLogin } from '../../app/action';
 
+import { LoginDOT } from '../../types/api.auth.types';
+
+
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +27,8 @@ export default function Login() {
 
   const handleLogin = () => {
     console.log('Credentials', `u: ${username} p: ${password}`);
-    dispatch(authLogin({ username, password }));
+    const payload: LoginDOT = { username, password };
+    dispatch(authLogin(payload));
   };
 
   return (

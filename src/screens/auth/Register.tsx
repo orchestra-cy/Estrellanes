@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RegisterDOT } from '../../types/api.auth.types';
 import {
   Text,
   View,
@@ -29,7 +30,7 @@ export default function Register() {
     confPassword: '',
   });
 
-  const handleChange = (key, value) => {
+  const handleChange = (key: string, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
@@ -54,14 +55,17 @@ export default function Register() {
 
     const created_at = new Date().toISOString();
 
-    const res = await RegisterUser(
-      form.email,
-      form.password,
-      form.username,
-      form.first_name,
-      form.last_name,
+    const payload: RegisterDOT = {
+      email: form.email,
+      password: form.password,
+      username: form.username,
+      first_name: form.first_name,
+      last_name: form.last_name,
+      contact_no: form.contact_no,
       created_at,
-    );
+    };
+
+    const res = await RegisterUser(payload);
 
     setIsLoading(false);
 

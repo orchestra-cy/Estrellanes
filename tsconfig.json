@@ -9,7 +9,7 @@
     "**/*.ts",
     "**/*.tsx",
     "nativewind-env.d.ts"
-  ],
+, "src/app/action.tsx", "src/components/CustomButton.tsx"  ],
   "exclude": [
     "**/node_modules",
     "**/Pods"
