@@ -1,13 +1,15 @@
-
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AppNav from './src/navigations'
-import "./global.css"
+import Toast from 'react-native-toast-message';
+import AppNav from './src/navigations';
+import toastConfig from './src/components/alert_message/config';
+import './global.css';
 
 function App() {
   return (
     <SafeAreaProvider style={styles.container}>
       <AppNav />
+      <Toast config={toastConfig} />
     </SafeAreaProvider>
   );
 }
