@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
-import { 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  Image, 
-  TextInput, 
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  TextInput,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Pressable,
 } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { ROUTES, IMG } from '../../utils';
 import { authLogin } from '../../app/action';
-
 import { LoginDOT } from '../../types/api.auth.types';
+import sign_in_with_google from '../../utils/firebase';
 
+import { showSuccess } from '../../components/alert_message';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -32,26 +35,24 @@ export default function Login() {
   };
 
   return (
-    <ImageBackground 
-      source={IMG.BACKGROUND} 
-      className="flex-1" 
+    <ImageBackground
+      source={IMG.BACKGROUND}
+      className="flex-1"
       resizeMode="cover"
     >
       {/* Semi-transparent overlay to ensure background doesn't overpower the foreground */}
       <View className="flex-1 bg-slate-900/40 justify-center">
-        
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
         >
-          <ScrollView 
-            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} 
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
             showsVerticalScrollIndicator={false}
             className="px-5"
           >
             {/* Main Floating Card */}
             <View className="bg-white rounded-[32px] px-8 py-10 shadow-2xl elevation-5 my-10">
-              
               {/* Logo & Enhanced Welcome Header */}
               <View className="items-center mb-8">
                 <Image
@@ -63,13 +64,13 @@ export default function Login() {
                   Welcome Back
                 </Text>
                 <Text className="text-slate-500 text-sm font-medium text-center leading-5 px-4">
-                  Sign in to manage your Toothalie records and book your next dental appointment
+                  Sign in to manage your Toothalie records and book your next
+                  dental appointment
                 </Text>
               </View>
 
               {/* Form Container */}
               <View className="space-y-6">
-                
                 {/* Username Input */}
                 <View>
                   <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
@@ -118,19 +119,58 @@ export default function Login() {
                   Sign In
                 </Text>
               </TouchableOpacity>
+              <View className="px-6 max-w-sm">
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  className="w-full bg-[#4285F4] rounded-lg px-5 py-2.5 mb-2"
+                  onPress={async () => {
+                    try {
+                      const response = await sign_in_with_google();
+                      if (response) {
+                        console.log('Login Success:', response);
+                        showSuccess({
+                          title: 'Google Sign-In successful',
+                          message: 'Welcome back!',
+                          type: 'success',
+                          position: 'top',
+                          visibilityTime: 3000,
+                        });
+                      } else {
+                        console.log('Sign-in cancelled by user.');
+                      }
+                    } catch (error) {
+                      console.error('Sign-in crashed:', error);
+                    } finally {
+                      console.log('Google Sign-In process completed');
+                    }
+                  }}
+                >
+                  <View className="flex-row items-center justify-center">
+                    {/* Simple "G" instead of SVG/icon */}
+                    <Text className="text-white text-base mr-2 font-bold">
+                      G
+                    </Text>
+
+                    <Text className="text-white text-sm font-medium">
+                      Sign up with Google
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
 
               {/* Register Link */}
               <View className="flex-row items-center justify-center mt-8">
                 <Text className="text-slate-500 text-sm font-medium">
                   New to the clinic?{' '}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate(ROUTES.REGISTER)}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate(ROUTES.REGISTER)}
+                >
                   <Text className="text-sky-500 text-sm font-bold">
                     Create an account
                   </Text>
                 </TouchableOpacity>
               </View>
-              
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
