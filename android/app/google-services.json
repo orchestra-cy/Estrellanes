@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "723424782640",
+    "project_id": "estrellanes",
+    "storage_bucket": "estrellanes.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:723424782640:android:700746d0ffc9b2b1a400f5",
+        "android_client_info": {
+          "package_name": "com.estrellanes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "723424782640-i306kc24im62dl1ufr5blugcf29jbv5q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.estrellanes",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "723424782640-n47kc70j0vbv1eloejdum9hpgl0evj4r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7nvcg4TNcUqpOmEHYHwQV2SSD_kwu67c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "723424782640-n47kc70j0vbv1eloejdum9hpgl0evj4r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
