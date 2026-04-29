@@ -12,12 +12,17 @@ import {
   Pressable,
 } from 'react-native';
 
+//api
+import { google_auth_api } from '../../app/api/auth';
+
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { ROUTES, IMG } from '../../utils';
 import { authLogin } from '../../app/action';
 import { LoginDOT } from '../../types/api.auth.types';
 import sign_in_with_google from '../../utils/firebase';
+import { authLoginGoogle } from '../../app/action';
+
 
 import { showSuccess } from '../../components/alert_message';
 
@@ -32,6 +37,38 @@ export default function Login() {
     console.log('Credentials', `u: ${username} p: ${password}`);
     const payload: LoginDOT = { username, password };
     dispatch(authLogin(payload));
+  };
+
+  const handleLoginGoogle = async () => {
+    console.log("Login function==================")
+    try {
+      const response = await sign_in_with_google();
+      if (response) {
+        console.log('Login Success:', response);
+        console.log('Token is :', response.userInfo.idToken);
+        if(response.userInfo.idToken){
+          const apiResponse = await google_auth_api(response.userInfo.idToken);
+          const data = await apiResponse.json();
+          console.log('api data is:', data);
+          dispatch(authLoginGoogle(data.token));
+        } else {
+          console.log('No token received from Google Sign-In');
+        }
+        showSuccess({
+          title: 'Google Sign-In successful',
+          message: 'Welcome back!',
+          type: 'success',
+          position: 'top',
+          visibilityTime: 3000,
+        });
+      } else {
+        console.log('Sign-in cancelled by user.');
+      }
+    } catch (error) {
+      console.error('Sign-in crashed:', error);
+    } finally {
+      console.log('Google Sign-In process completed');
+    }
   };
 
   return (
@@ -123,27 +160,7 @@ export default function Login() {
                 <TouchableOpacity
                   activeOpacity={0.9}
                   className="w-full bg-[#4285F4] rounded-lg px-5 py-2.5 mb-2"
-                  onPress={async () => {
-                    try {
-                      const response = await sign_in_with_google();
-                      if (response) {
-                        console.log('Login Success:', response);
-                        showSuccess({
-                          title: 'Google Sign-In successful',
-                          message: 'Welcome back!',
-                          type: 'success',
-                          position: 'top',
-                          visibilityTime: 3000,
-                        });
-                      } else {
-                        console.log('Sign-in cancelled by user.');
-                      }
-                    } catch (error) {
-                      console.error('Sign-in crashed:', error);
-                    } finally {
-                      console.log('Google Sign-In process completed');
-                    }
-                  }}
+                  onPress={handleLoginGoogle}
                 >
                   <View className="flex-row items-center justify-center">
                     {/* Simple "G" instead of SVG/icon */}

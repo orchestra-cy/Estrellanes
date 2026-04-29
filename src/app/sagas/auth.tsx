@@ -4,13 +4,17 @@ import {
   USER_LOGIN_REQUEST,
   USER_LOGIN_SUCCESS,
   USER_LOGIN_FAILURE,
+  USER_LOGIN_GOOGLE,
   USER_LOGOUT,
 } from '../action';
 import { UserLogin } from '../api/auth';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { LoginDOT } from '../../types/api.auth.types';
-import { UserLoginAction } from '../../types/reducer.auth.types';
+import {
+  UserLoginGoogleAction,
+  UserLoginAction,
+} from '../../types/reducer.auth.types';
 import { UserLoginResult } from '../../types/api.user.types';
 
 export function* userLoginAsync(action: UserLoginAction) {
@@ -32,7 +36,9 @@ export function* userLoginAsync(action: UserLoginAction) {
         console.log('USER_LOGIN_FAILURE');
       }
 
-      const message: string = (result.error ? result.error : 'Invalid credentials');
+      const message: string = result.error
+        ? result.error
+        : 'Invalid credentials';
       yield put({ type: USER_LOGIN_FAILURE, error: message });
       console.log('USER_LOGIN_FAILURE');
       return;
@@ -62,8 +68,33 @@ export function* userLoginAsync(action: UserLoginAction) {
 //   }
 // }
 
+export function* userLoginGoogleAsync(action: UserLoginGoogleAction) {
+  try {
+    console.log('USER_LOGIN_GOOGLE action:', action);
+    yield put({ type: USER_LOGIN_REQUEST });
+
+    const token = (action.payload as unknown as string) || '';
+    if (!token) {
+      yield put({ type: USER_LOGIN_FAILURE, error: 'Missing auth token' });
+      return;
+    }
+
+    const payload = { token };
+    yield put({ type: USER_LOGIN_SUCCESS, payload });
+  } catch (error) {
+    yield put({
+      type: USER_LOGIN_FAILURE,
+      error: (error as Error)?.message || 'Google login failed',
+    });
+  }
+}
+
 export function* userLoginAction() {
   yield takeLatest(USER_LOGIN, userLoginAsync);
+}
+
+export function* userLoginGoogleAction() {
+  yield takeLatest(USER_LOGIN_GOOGLE, userLoginGoogleAsync);
 }
 
 // export function* userLogoutAction() {

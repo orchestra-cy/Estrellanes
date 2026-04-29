@@ -1,7 +1,7 @@
 import { LoginDOT,RegisterDOT } from "../../types/api.auth.types";
+const BaseUrl = 'http://127.0.0.1:8000/api';
 
 export async function UserLogin({ username, password }: LoginDOT) {
-  const BaseUrl = 'http://127.0.0.1:8000/api';
   const url = `${BaseUrl}/login-auth`;
 
   try {
@@ -39,6 +39,19 @@ export async function UserLogin({ username, password }: LoginDOT) {
       error: error?.message || String(error),
     };
   }
+}
+
+export async function google_auth_api(tokenID: string) {
+  const result = await fetch(BaseUrl + "/auth/google/mobile", {
+    method: "POST",
+    headers: {
+      "Content-type": "application/json",
+    },
+    body: JSON.stringify({
+      tokenId: tokenID,
+    }),
+  });
+  return result;
 }
 
 export async function RegisterUser(

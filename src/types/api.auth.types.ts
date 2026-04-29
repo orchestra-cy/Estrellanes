@@ -19,3 +19,7 @@ export interface AuthState {
   token : string
   userData : string | null
 }
+
+export interface LoginGoogleDOT{
+  idToken: string,
+}

@@ -3,9 +3,11 @@ import {
   USER_LOGIN_REQUEST,
   USER_LOGIN_SUCCESS,
   USER_LOGIN_FAILURE,
+  USER_LOGIN_GOOGLE,
   USER_LOGOUT,
 } from '../app/action';
-import { LoginDOT } from './api.auth.types';
+import { LoginDOT, LoginGoogleDOT } from './api.auth.types';
+
 
 export interface AuthUser {
   id?: number | string;
@@ -34,6 +36,11 @@ export interface AuthState {
 export interface UserLoginAction {
   type: typeof USER_LOGIN;
   payload: LoginDOT;
+}
+
+export interface UserLoginGoogleAction {
+  type: typeof USER_LOGIN_GOOGLE;
+  payload: LoginGoogleDOT;
 }
 
 export interface UserLoginRequestAction {
