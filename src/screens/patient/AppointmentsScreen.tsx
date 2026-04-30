@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FetchAppointment } from '../../app/api/appointment';
 import { AppointmentDOT } from '../../types/screen.appointment.types';
+import BookAppointmentModal from './crud_appointment/BookAppointmentModal';
+import AppointmentDetailsModal from './crud_appointment/AppointmentDetailsModal';
+import EditAppointmentModal from './crud_appointment/EditAppointmentModal';
+import { deleteAppointment } from '../../app/api/patient';
 import {
   View,
   Text,
@@ -8,35 +12,45 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function AppointmentsScreen() {
   const [appointmentsData, setAppointmentsData] = useState<AppointmentDOT>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(
+    null,
+  );
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | null
+  >(null);
+
+  const loadAppointments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await FetchAppointment();
+      if (data && data.status === 'ok' && Array.isArray(data.appointments)) {
+        console.log(data.appointments);
+        setAppointmentsData(data.appointments);
+      } else {
+        setAppointmentsData([]);
+      }
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+      setError('Failed to load appointments.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const data = await FetchAppointment();
-        if (data && data.status === 'ok' && Array.isArray(data.appointments)) {
-          console.log(data.appointments)
-          setAppointmentsData(data.appointments);
-        } else {
-          setAppointmentsData([]);
-        }
-      } catch (err) {
-        console.error('Error fetching appointments:', err);
-        setError('Failed to load appointments.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+    loadAppointments();
+  }, [loadAppointments]);
 
   if (loading) {
     return (
@@ -61,7 +75,7 @@ export default function AppointmentsScreen() {
         <Text className="text-slate-500 text-center mb-6">{error}</Text>
         <TouchableOpacity
           className="bg-slate-900 py-3 px-6 rounded-xl"
-          onPress={() => {}}
+          onPress={loadAppointments}
         >
           <Text className="text-white font-semibold text-base">Try Again</Text>
         </TouchableOpacity>
@@ -78,6 +92,7 @@ export default function AppointmentsScreen() {
         <TouchableOpacity
           className="flex-row items-center bg-indigo-600 py-2.5 px-4 rounded-xl shadow-md shadow-indigo-500/20"
           activeOpacity={0.8}
+          onPress={() => setShowBookingModal(true)}
         >
           <Icon name="plus" size={20} color="#FFF" />
           <Text className="text-white font-semibold ml-1.5 text-sm">
@@ -97,7 +112,10 @@ export default function AppointmentsScreen() {
           <Text className="text-sm text-slate-400 text-center mb-6">
             You are all caught up! Need to see a doctor?
           </Text>
-          <TouchableOpacity activeOpacity={0.7}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setShowBookingModal(true)}
+          >
             <Text className="text-indigo-600 text-base font-semibold">
               Schedule a visit now
             </Text>
@@ -112,7 +130,16 @@ export default function AppointmentsScreen() {
           renderItem={({ item }) => {
             const { appointment, dentist } = item;
             return (
-              <View className="bg-white p-5 rounded-3xl mb-4 shadow-sm border border-slate-100 flex-row items-center justify-between">
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedAppointment(item);
+                  const apptId = item?.appointment?.id;
+                  setSelectedAppointmentId(apptId ? String(apptId) : null);
+                  setShowDetailsModal(true);
+                }}
+                className="bg-white p-5 rounded-3xl mb-4 shadow-sm border border-slate-100 flex-row items-center justify-between"
+                activeOpacity={0.85}
+              >
                 <View>
                   <Text className="text-lg font-bold text-slate-900 mb-1">
                     Dr. {dentist?.first_name}{' '}
@@ -134,12 +161,59 @@ export default function AppointmentsScreen() {
                       {appointment?.status || 'Pending'}
                     </Text>
                   </View>
+                  <Icon name="chevron-right" size={20} color="#94A3B8" />
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           }}
         />
       )}
+      <BookAppointmentModal
+        visible={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        onSuccess={loadAppointments}
+      />
+      <AppointmentDetailsModal
+        visible={showDetailsModal}
+        appointmentData={selectedAppointment}
+        onClose={() => setShowDetailsModal(false)}
+        onEdit={() => {
+          setShowDetailsModal(false);
+          setShowEditModal(true);
+        }}
+        onDelete={() => {
+          const apptId = selectedAppointmentId;
+          if (!apptId) return;
+          Alert.alert(
+            'Cancel Appointment',
+            'Are you sure you want to cancel this appointment?',
+            [
+              { text: 'No', style: 'cancel' },
+              {
+                text: 'Yes',
+                style: 'destructive',
+                onPress: async () => {
+                  try {
+                    await deleteAppointment(apptId);
+                    setShowDetailsModal(false);
+                    setSelectedAppointment(null);
+                    setSelectedAppointmentId(null);
+                    loadAppointments();
+                  } catch (err) {
+                    console.error(err);
+                  }
+                },
+              },
+            ],
+          );
+        }}
+      />
+      <EditAppointmentModal
+        visible={showEditModal}
+        appointmentId={selectedAppointmentId}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={loadAppointments}
+      />
     </SafeAreaView>
   );
 }

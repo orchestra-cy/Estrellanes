@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { fetchHistory } from '../../app/api/appointment';
-import type { HistoryDOT } from '../../types/history.types';
 import {
   View,
   Text,
@@ -10,70 +8,105 @@ import {
   SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { fetchHistory } from '../../app/api/appointment';
+import { GetUserInfo } from '../../app/api/user';
 
-interface HistoryItem {
-  action?: string;
-  logged_at: string | number | Date;
-  actor_type?: string;
-  patient_first_name?: string;
-  patient_last_name?: string;
-  dentist_first_name?: string;
-  dentist_last_name?: string;
-}
+//types
+import type { HistoryDOT } from '../../types/history.types';
+import type { HistoryItem,HistoryResponse } from '../../types/patient.history.types';
 
 interface RootState {
   auth: {
     userData?: {
-      id: string;
-      roles: string | string[];
-    };
+      id?: string | number;
+      roles?: string[] | string;
+    } | null;
   };
 }
 
+
+
+const normalizeRole = (roles?: string[] | string | null) => {
+  if (!roles) return null;
+  const rawRoles = Array.isArray(roles) ? roles : [roles];
+  const expanded = rawRoles.flatMap(entry => {
+    const trimmed = String(entry).trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.map(String);
+      } catch {
+        return [trimmed];
+      }
+    }
+    return [trimmed];
+  });
+
+  const normalized = expanded
+    .map(role =>
+      role
+        .replace(/[[\]"]+/g, '')
+        .replace('ROLE_', '')
+        .toUpperCase(),
+    )
+    .filter(Boolean);
+
+  return normalized[0] || null;
+};
+
 export default function HistoryScreen() {
-  console.log('history screen');
+  const auth = useSelector((state: RootState) => state.auth);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const auth = useSelector((state: RootState) => state.auth);
-  console.log('auth', auth);
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!auth?.userData?.id) {
-        setLoading(false);
+    let isMounted = true;
+
+    const loadHistory = async () => {
+      const roleFromStore = normalizeRole(auth?.userData?.roles);
+      const userIdFromStore = auth?.userData?.id;
+
+      let userId = userIdFromStore ? String(userIdFromStore) : '';
+      let role = roleFromStore || '';
+
+      if (!userId || !role) {
+        try {
+          const info = await GetUserInfo();
+          userId = info?.user?.id ? String(info.user.id) : userId;
+          role = normalizeRole(info?.user?.roles) || role;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      if (!userId || !role) {
+        if (isMounted) setLoading(false);
         return;
       }
 
-      setLoading(true);
       try {
-        const roleRaw = auth.userData.roles;
-        const role = Array.isArray(roleRaw) ? roleRaw[0] : roleRaw;
-        const normalizedRole = role
-          ? String(role)
-              .replace(/[[\]"]+/g, '')
-              .replace('ROLE_', '')
-          : 'USER';
-
         const payload: HistoryDOT = {
-          userID: auth.userData.id,
-          role: normalizedRole,
+          userID: userId,
+          role,
         };
-        const response = await fetchHistory(payload);
-        console.log('history ya');
-        console.log(response);
-        if (response?.status === 'ok') {
-          console.log(response.data);
-          setHistory(response.data || []);
-        } else {
-          setHistory([]);
+        const response = (await fetchHistory(payload)) as HistoryResponse;
+        if (isMounted) {
+          setHistory(response?.data || []);
         }
-      } catch (err) {
-        console.error('Error fetching history:', err);
+      } catch (e) {
+        console.error(e);
+        if (isMounted) setHistory([]);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
-    fetchData();
+    loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
   }, [auth?.userData?.id, auth?.userData?.roles]);
 
   if (loading) {
@@ -81,7 +114,7 @@ export default function HistoryScreen() {
       <View className="flex-1 justify-center items-center bg-slate-50 p-5">
         <ActivityIndicator size="large" color="#4F46E5" />
         <Text className="mt-4 text-slate-500 text-base font-medium">
-          Loading timeline...
+          Loading history...
         </Text>
       </View>
     );
@@ -104,50 +137,38 @@ export default function HistoryScreen() {
             No History Yet
           </Text>
           <Text className="text-sm text-slate-500 text-center">
-            Once you create, update, or cancel appointments, the detailed logs
-            will appear here.
+            Logs will appear here once appointments are updated.
           </Text>
         </View>
       ) : (
         <FlatList
           data={history}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(_, index) => String(index)}
           contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => {
-            const isLast = index === history.length - 1;
-
+          renderItem={({ item }) => {
+            const action = item.action?.toLowerCase() || '';
             let config = {
               icon: 'information',
-              color: '#4F46E5', // Indigo 600
-              bgColor: 'bg-indigo-50',
-              dotColor: 'bg-indigo-400',
+              color: '#4F46E5',
               label: 'System Activity',
             };
 
-            const action = item.action?.toLowerCase() || '';
             if (action.includes('create')) {
               config = {
                 icon: 'plus',
-                color: '#4F46E5', // Indigo 600
-                bgColor: 'bg-indigo-50',
-                dotColor: 'bg-indigo-400',
+                color: '#4F46E5',
                 label: 'Appointment Created',
               };
             } else if (action.includes('update')) {
               config = {
                 icon: 'pencil',
-                color: '#D97706', // Amber 600
-                bgColor: 'bg-amber-50',
-                dotColor: 'bg-amber-400',
+                color: '#D97706',
                 label: 'Details Updated',
               };
             } else if (action.includes('cancel')) {
               config = {
                 icon: 'close-circle',
-                color: '#E11D48', // Rose 600
-                bgColor: 'bg-rose-50',
-                dotColor: 'bg-rose-400',
+                color: '#E11D48',
                 label: 'Appointment Cancelled',
               };
             }
@@ -163,65 +184,29 @@ export default function HistoryScreen() {
             });
 
             return (
-              <View className="relative pl-8 mb-6">
-                {/* Timeline Line */}
-                {!isLast && (
-                  <View className="absolute left-[11px] top-6 bottom-[-24px] w-0.5 bg-slate-200" />
-                )}
-
-                {/* Timeline Dot */}
-                <View
-                  className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-slate-50 shadow-sm flex items-center justify-center z-10 ${config.bgColor}`}
-                >
-                  <View className={`w-2 h-2 rounded-full ${config.dotColor}`} />
-                </View>
-
-                {/* Card */}
-                <View className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                  <View className="flex-row justify-between items-center mb-2">
-                    <View className="flex-row items-center gap-2">
-                      <Icon name={config.icon} size={20} color={config.color} />
-                      <Text className="text-base font-bold text-slate-900">
-                        {config.label}
-                      </Text>
-                    </View>
-                    <View className="bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                      <Text className="text-xs text-slate-500 font-medium">
-                        {dateStr} • {timeStr}
-                      </Text>
-                    </View>
+              <View className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-3">
+                <View className="flex-row justify-between items-center mb-2">
+                  <View className="flex-row items-center gap-2">
+                    <Icon name={config.icon} size={20} color={config.color} />
+                    <Text className="text-base font-bold text-slate-900">
+                      {config.label}
+                    </Text>
                   </View>
-
-                  <View className="flex-row items-center gap-2 mt-2">
-                    <View
-                      className={`px-2 py-0.5 rounded-full border ${item.actor_type === 'PATIENT' ? 'bg-blue-50 border-blue-100' : 'bg-emerald-50 border-emerald-100'}`}
-                    >
-                      <Text
-                        className={`text-[10px] font-bold uppercase ${item.actor_type === 'PATIENT' ? 'text-blue-600' : 'text-emerald-600'}`}
-                      >
-                        {item.actor_type}
-                      </Text>
-                    </View>
-                    <Text className="text-sm text-slate-600 font-medium">
-                      {item.actor_type === 'PATIENT'
-                        ? `${item.patient_first_name || ''} ${item.patient_last_name || ''}`
-                        : `Dr. ${item.dentist_first_name || ''} ${item.dentist_last_name || ''}`}
+                  <View className="bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                    <Text className="text-xs text-slate-500 font-medium">
+                      {dateStr} • {timeStr}
                     </Text>
                   </View>
                 </View>
+                <Text className="text-sm text-slate-500">
+                  {item.patient_first_name || item.dentist_first_name
+                    ? `${item.patient_first_name || ''} ${item.patient_last_name || ''}`.trim() ||
+                      `${item.dentist_first_name || ''} ${item.dentist_last_name || ''}`.trim()
+                    : 'Activity logged'}
+                </Text>
               </View>
             );
           }}
-          ListFooterComponent={
-            history.length > 0 ? (
-              <View className="flex-row items-center ml-1 mt-2 opacity-50">
-                <View className="w-2 h-2 rounded-full bg-slate-300 mr-3" />
-                <Text className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Start of Records
-                </Text>
-              </View>
-            ) : null
-          }
         />
       )}
     </SafeAreaView>
