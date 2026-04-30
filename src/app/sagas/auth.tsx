@@ -24,6 +24,13 @@ export function* userLoginAsync(action: UserLoginAction) {
     console.log('USER_LOGIN_REQUEST');
     const payload_login: LoginDOT = action.payload;
     const result: UserLoginResult = yield call(UserLogin, payload_login);
+    // const result =  {
+    //   ok: true,
+    //   status: 200,
+    //   token: "test",
+    //   error: "", 
+    // }
+    
     console.log('the result is', result);
     if (result) {
       if (result.ok === true) {
