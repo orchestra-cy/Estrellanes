@@ -23,3 +23,16 @@ export interface AuthState {
 export interface LoginGoogleDOT{
   idToken: string,
 }
+
+export interface UserInfoDOT {
+  status: string,
+  user: {
+      id: number,
+      username: string,
+      "firstName": string,
+      "lastName": string,
+      "email": string,
+      disable: null | string | number,
+      roles: string[]
+  }
+}

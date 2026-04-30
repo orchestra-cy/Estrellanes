@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { fetchHistory } from '../app/api/appointment';
-import type { HistoryDOT } from '../types/history.types';
+import { fetchHistory } from '../../app/api/appointment';
+import type { HistoryDOT } from '../../types/history.types';
 import {
   View,
   Text,

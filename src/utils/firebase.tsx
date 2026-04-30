@@ -4,9 +4,18 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import Config from 'react-native-config';
+
+const googleWebClientId = Config.WEB_CLIENT_ID;
+
+if (!googleWebClientId) {
+  console.warn(
+    '[GoogleSignin] WEB_CLIENT_ID is missing. Check .env and rebuild the app.',
+  );
+}
 
 GoogleSignin.configure({
-  webClientId: '723424782640-n47kc70j0vbv1eloejdum9hpgl0evj4r.apps.googleusercontent.com',
+  webClientId: googleWebClientId,
 });
 
 const sign_in_with_google = async () => {

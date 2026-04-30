@@ -19,10 +19,10 @@ const getToken = async () => {
   }
 };
 
-export async function GetUserInfo() {
+export async function GetUserInfo(tokenOverride?: string | null) {
   const url = `${BaseUrl}/get-user-info`;
   try {
-    const token = await getToken();
+    const token = tokenOverride || (await getToken());
     const res = await fetch(url, {
       method: 'GET',
       headers: {
@@ -43,9 +43,17 @@ export async function GetUserInfo() {
   }
 }
 
-export async function ChangePassword({currentPassword, newPassword, confirmPassword}: ChangePassDOT) {
+export async function ChangePassword({
+  currentPassword,
+  newPassword,
+  confirmPassword,
+}: ChangePassDOT) {
   const url = `${BaseUrl}/change-pass`;
-  console.log('data send change password: ', { currentPassword, newPassword, confirmPassword })
+  console.log('data send change password: ', {
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  });
   try {
     const token = await getToken();
     const res = await fetch(url, {
@@ -62,7 +70,7 @@ export async function ChangePassword({currentPassword, newPassword, confirmPassw
     });
 
     const data = await res.json();
-    console.log("the data respone by server: ",data)
+    console.log('the data respone by server: ', data);
     return data;
   } catch (error) {
     console.log('ChangePassword error:', error);

@@ -23,7 +23,6 @@ import { LoginDOT } from '../../types/api.auth.types';
 import sign_in_with_google from '../../utils/firebase';
 import { authLoginGoogle } from '../../app/action';
 
-
 import { showSuccess } from '../../components/alert_message';
 
 export default function Login() {
@@ -40,27 +39,33 @@ export default function Login() {
   };
 
   const handleLoginGoogle = async () => {
-    console.log("Login function==================")
+    console.log('Login function==================');
     try {
       const response = await sign_in_with_google();
       if (response) {
+        const idToken = response?.userInfo?.idToken;
         console.log('Login Success:', response);
-        console.log('Token is :', response.userInfo.idToken);
-        if(response.userInfo.idToken){
-          const apiResponse = await google_auth_api(response.userInfo.idToken);
-          const data = await apiResponse.json();
-          console.log('api data is:', data);
-          dispatch(authLoginGoogle(data.token));
-        } else {
+        console.log('Token is :', idToken);
+        if (!idToken) {
           console.log('No token received from Google Sign-In');
+          return;
         }
-        showSuccess({
-          title: 'Google Sign-In successful',
-          message: 'Welcome back!',
-          type: 'success',
-          position: 'top',
-          visibilityTime: 3000,
-        });
+
+        const apiResponse = await google_auth_api(idToken);
+        const data = await apiResponse.json();
+        console.log('api data is:', data);
+        if (data?.token) {
+          dispatch(authLoginGoogle(data.token));
+          showSuccess({
+            title: 'Google Sign-In successful',
+            message: 'Welcome back!',
+            type: 'success',
+            position: 'top',
+            visibilityTime: 3000,
+          });
+        } else {
+          console.log('No token returned by backend');
+        }
       } else {
         console.log('Sign-in cancelled by user.');
       }

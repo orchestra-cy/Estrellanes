@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FetchAppointment } from '../app/api/appointment';
-import { AppointmentDOT } from '../types/screen.appointment.types';
+import { FetchAppointment } from '../../app/api/appointment';
+import { AppointmentDOT } from '../../types/screen.appointment.types';
 import {
   View,
   Text,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserInfo } from '../types/api.user.types';
+import { UserInfo } from '../../types/api.user.types';
 import {
   View,
   Text,
@@ -11,13 +11,13 @@ import {
 
 
 import { useDispatch } from 'react-redux';
-import { authLogout } from '../app/action';
+import { authLogout } from '../../app/action';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { GetUserInfo, ChangePassword } from '../app/api/user';
+import { GetUserInfo, ChangePassword } from '../../app/api/user';
 import { Alert, ActivityIndicator } from 'react-native';
 
 
-import { ChangePassDOT } from '../types/api.user.types';
+import { ChangePassDOT } from '../../types/api.user.types';
 
 
 export default function ProfileScreen() {
