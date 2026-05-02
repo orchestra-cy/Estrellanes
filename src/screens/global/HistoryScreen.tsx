@@ -13,7 +13,10 @@ import { GetUserInfo } from '../../app/api/user';
 
 //types
 import type { HistoryDOT } from '../../types/history.types';
-import type { HistoryItem,HistoryResponse } from '../../types/patient.history.types';
+import type {
+  HistoryItem,
+  HistoryResponse,
+} from '../../types/patient.history.types';
 
 interface RootState {
   auth: {
@@ -23,8 +26,6 @@ interface RootState {
     } | null;
   };
 }
-
-
 
 const normalizeRole = (roles?: string[] | string | null) => {
   if (!roles) return null;
@@ -112,8 +113,8 @@ export default function HistoryScreen() {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-slate-50 p-5">
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text className="mt-4 text-slate-500 text-base font-medium">
+        <ActivityIndicator size="large" color="#0ea5e9" />
+        <Text className="mt-4 text-slate-500 text-base font-medium tracking-wide">
           Loading history...
         </Text>
       </View>
@@ -122,53 +123,61 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      <View className="px-5 pt-5 pb-4">
-        <Text className="text-2xl font-bold text-slate-900">
+      <View className="px-6 pt-6 pb-4">
+        <Text className="text-3xl font-extrabold text-slate-800 tracking-tight">
           Activity History
         </Text>
       </View>
 
       {history.length === 0 ? (
-        <View className="flex-1 justify-center items-center px-8 mx-5 mb-5 bg-white rounded-3xl border border-dashed border-slate-200">
-          <View className="w-16 h-16 rounded-full bg-slate-50 justify-center items-center mb-4">
-            <Icon name="clock-outline" size={32} color="#CBD5E1" />
+        <View className="flex-1 justify-center items-center px-8 mx-6 mb-6 bg-white rounded-[32px] border-2 border-dashed border-slate-200">
+          <View className="w-20 h-20 rounded-full bg-slate-50 justify-center items-center mb-5">
+            <Icon name="history" size={36} color="#94a3b8" />
           </View>
-          <Text className="text-xl font-bold text-slate-900 mb-2">
+          <Text className="text-xl font-bold text-slate-800 mb-2">
             No History Yet
           </Text>
-          <Text className="text-sm text-slate-500 text-center">
-            Logs will appear here once appointments are updated.
+          <Text className="text-sm text-slate-500 text-center leading-5 px-2">
+            Your appointment logs and account activities will appear here once
+            you start booking.
           </Text>
         </View>
       ) : (
         <FlatList
           data={history}
           keyExtractor={(_, index) => String(index)}
-          contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100, paddingTop: 8 }}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
             const action = item.action?.toLowerCase() || '';
+            
+            // Dynamic configuration based on the action type
             let config = {
-              icon: 'information',
-              color: '#4F46E5',
+              icon: 'information-variant',
+              iconColor: '#64748b', // slate-500
+              bg: 'bg-slate-100',
               label: 'System Activity',
             };
 
             if (action.includes('create')) {
               config = {
-                icon: 'plus',
-                color: '#4F46E5',
+                icon: 'calendar-plus',
+                iconColor: '#0ea5e9', // sky-500
+                bg: 'bg-sky-50',
                 label: 'Appointment Created',
               };
             } else if (action.includes('update')) {
               config = {
-                icon: 'pencil',
-                color: '#D97706',
+                icon: 'calendar-edit',
+                iconColor: '#f59e0b', // amber-500
+                bg: 'bg-amber-50',
                 label: 'Details Updated',
               };
             } else if (action.includes('cancel')) {
               config = {
-                icon: 'close-circle',
-                color: '#E11D48',
+                icon: 'calendar-remove',
+                iconColor: '#e11d48', // rose-600
+                bg: 'bg-rose-50',
                 label: 'Appointment Cancelled',
               };
             }
@@ -183,27 +192,43 @@ export default function HistoryScreen() {
               minute: '2-digit',
             });
 
+            // Extract the name safely
+            const personName = item.patient_first_name || item.dentist_first_name
+              ? `${item.patient_first_name || ''} ${item.patient_last_name || ''}`.trim() ||
+                `${item.dentist_first_name || ''} ${item.dentist_last_name || ''}`.trim()
+              : 'System update';
+
             return (
-              <View className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-3">
-                <View className="flex-row justify-between items-center mb-2">
-                  <View className="flex-row items-center gap-2">
-                    <Icon name={config.icon} size={20} color={config.color} />
-                    <Text className="text-base font-bold text-slate-900">
+              <View className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm mb-4 flex-row items-start">
+                {/* Circular Icon Container */}
+                <View
+                  className={`w-12 h-12 rounded-full items-center justify-center mr-4 ${config.bg}`}
+                >
+                  <Icon name={config.icon} size={24} color={config.iconColor} />
+                </View>
+
+                {/* Content */}
+                <View className="flex-1 pt-1">
+                  <View className="flex-row justify-between items-start mb-1">
+                    <Text className="text-base font-bold text-slate-800 flex-1 pr-2">
                       {config.label}
                     </Text>
+                    <Text className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">
+                      {dateStr}
+                    </Text>
                   </View>
-                  <View className="bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                    <Text className="text-xs text-slate-500 font-medium">
-                      {dateStr} • {timeStr}
+                  
+                  <Text className="text-sm font-medium text-slate-500 mb-1">
+                    {personName}
+                  </Text>
+                  
+                  <View className="flex-row items-center mt-1">
+                    <Icon name="clock-outline" size={14} color="#94a3b8" />
+                    <Text className="text-xs text-slate-400 font-bold ml-1">
+                      {timeStr}
                     </Text>
                   </View>
                 </View>
-                <Text className="text-sm text-slate-500">
-                  {item.patient_first_name || item.dentist_first_name
-                    ? `${item.patient_first_name || ''} ${item.patient_last_name || ''}`.trim() ||
-                      `${item.dentist_first_name || ''} ${item.dentist_last_name || ''}`.trim()
-                    : 'Activity logged'}
-                </Text>
               </View>
             );
           }}

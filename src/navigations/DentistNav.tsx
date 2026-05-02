@@ -5,7 +5,7 @@ import { ROUTES } from '../utils';
 import DentistBottomNav from '../components/DentistBottomNav';
 import DentistDashboardScreen from '../screens/dentist/DentistDashboardScreen';
 import DentistAppointmentsScreen from '../screens/dentist/DentistAppointmentsScreen';
-import DentistHistoryScreen from '../screens/dentist/DentistHistoryScreen';
+import DentistHistoryScreen from '../screens/global/HistoryScreen';
 import DentistReminderScreen from '../screens/dentist/DentistReminderScreen';
 import DentistSettingsScreen from '../screens/dentist/DentistSettingsScreen';
 import ProfileScreen from '../screens/global/ProfileScreen';

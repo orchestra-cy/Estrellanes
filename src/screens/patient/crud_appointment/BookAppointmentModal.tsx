@@ -22,8 +22,13 @@ import {
 } from '../../../app/api/patient';
 
 // types
-import { ServiceItem,AppointmentType,DentistItem,BookAppointmentModalProps } from '../../../types/patient.appointment.types'; 
-  
+import {
+  ServiceItem,
+  AppointmentType,
+  DentistItem,
+  BookAppointmentModalProps,
+} from '../../../types/patient.appointment.types';
+
 const normalizeServiceItem = (service: any): ServiceItem => {
   const serviceId = service.service_id ?? service.serviceID;
   const serviceName = service.service_name ?? service.serviceName;
@@ -253,195 +258,256 @@ export default function BookAppointmentModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 bg-black/40">
-        <SafeAreaView className="flex-1 bg-white rounded-t-3xl mt-auto">
-          <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-100">
-            <Text className="text-lg font-bold text-slate-900">
-              Book Appointment
-            </Text>
-            <TouchableOpacity onPress={handleClose}>
-              <Icon name="close" size={22} color="#94A3B8" />
+      <View className="flex-1 bg-slate-900/60 justify-end">
+        <SafeAreaView className="bg-white rounded-t-[32px] h-[95%] overflow-hidden shadow-lg">
+          {/* Drag Handle Indicator */}
+          <View className="items-center pt-3 pb-1">
+            <View className="w-12 h-1.5 bg-slate-200 rounded-full" />
+          </View>
+
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-slate-100">
+            <View>
+              <Text className="text-2xl font-extrabold text-slate-800 tracking-tight">
+                Book Appointment
+              </Text>
+              <Text className="text-sm font-medium text-slate-500 mt-0.5">
+                {step > 1 ? `Step ${step} of 3` : 'Schedule your dental visit'}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={handleClose}
+              className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center"
+              activeOpacity={0.7}
+            >
+              <Icon name="close" size={20} color="#64748B" />
             </TouchableOpacity>
           </View>
 
+          {/* Loading */}
           {loading ? (
-            <View className="flex-1 justify-center items-center">
-              <ActivityIndicator size="large" color="#4F46E5" />
-              <Text className="mt-3 text-slate-500">Loading...</Text>
+            <View className="flex-1 justify-center items-center py-20">
+              <ActivityIndicator size="large" color="#0ea5e9" />
+              <Text className="mt-4 text-slate-500 font-medium tracking-wide">
+                Loading booking details...
+              </Text>
             </View>
           ) : (
             <ScrollView
-              contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+              contentContainerStyle={{ padding: 24, paddingBottom: 140 }}
               showsVerticalScrollIndicator={false}
             >
+              {/* STEP 1 */}
               {step === 1 && (
-                <View className="space-y-4">
-                  <Text className="text-xl font-bold text-slate-900">
-                    How would you like to proceed?
-                  </Text>
-                  <Text className="text-sm text-slate-500">
-                    Choose your booking method.
-                  </Text>
+                <View className="space-y-6">
+                  <View>
+                    <Text className="text-xl font-bold text-slate-800">
+                      Choose Booking Method
+                    </Text>
+                    <Text className="text-sm text-slate-500 mt-1">
+                      Continue with self booking or contact an operator.
+                    </Text>
+                  </View>
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      setBookingMethod('self');
-                      setStep(2);
-                    }}
-                    className="bg-white border border-slate-200 rounded-2xl p-4"
-                  >
-                    <Text className="text-base font-semibold text-slate-900">
-                      Self Booking
-                    </Text>
-                    <Text className="text-xs text-slate-500 mt-1">
-                      Pick a dentist and schedule instantly.
-                    </Text>
-                  </TouchableOpacity>
+                  <View className="space-y-4">
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        setBookingMethod('self');
+                        setStep(2);
+                      }}
+                      className="bg-white border-2 border-slate-100 rounded-[24px] p-5 flex-row items-center mb-2"
+                    >
+                      <View className="w-14 h-14 bg-sky-50 rounded-full items-center justify-center mr-4">
+                        <Icon name="calendar-check" size={28} color="#0ea5e9" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-lg font-bold text-slate-800">
+                          Self Booking
+                        </Text>
+                        <Text className="text-sm text-slate-500 mt-0.5 leading-5">
+                          Choose service, dentist, and time instantly.
+                        </Text>
+                      </View>
+                      <Icon name="chevron-right" size={24} color="#cbd5e1" />
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      setBookingMethod('operator');
-                      Linking.openURL('tel:09453690012');
-                    }}
-                    className="bg-white border border-slate-200 rounded-2xl p-4"
-                  >
-                    <Text className="text-base font-semibold text-slate-900">
-                      Call Operator
-                    </Text>
-                    <Text className="text-xs text-slate-500 mt-1">
-                      Speak with our team for assistance.
-                    </Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        setBookingMethod('operator');
+                        Linking.openURL('tel:09453690012');
+                      }}
+                      className="bg-white border-2 border-slate-100 rounded-[24px] p-5 flex-row items-center"
+                    >
+                      <View className="w-14 h-14 bg-emerald-50 rounded-full items-center justify-center mr-4">
+                        <Icon name="phone" size={28} color="#10b981" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-lg font-bold text-slate-800">
+                          Call Operator
+                        </Text>
+                        <Text className="text-sm text-slate-500 mt-0.5 leading-5">
+                          Get direct assistance from our clinic staff.
+                        </Text>
+                      </View>
+                      <Icon name="open-in-new" size={22} color="#cbd5e1" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
 
+              {/* STEP 2 */}
               {step === 2 && (
-                <View className="space-y-5">
-                  <Text className="text-lg font-bold text-slate-900">
-                    Select Service
-                  </Text>
-                  {Object.keys(servicesByType).map(typeName => (
-                    <View key={typeName}>
-                      <Text className="text-xs text-slate-400 uppercase font-semibold mb-2">
-                        {typeName}
+                <View className="space-y-8">
+                  <View>
+                    <Text className="text-xl font-bold text-slate-800 mb-5">
+                      1. Select Service
+                    </Text>
+
+                    {Object.keys(servicesByType).map(typeName => (
+                      <View key={typeName} className="mb-5">
+                        <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-3 ml-1">
+                          {typeName}
+                        </Text>
+
+                        <View className="flex-row flex-wrap gap-2">
+                          {servicesByType[typeName].map(service => {
+                            const active = selectedService?.service_id === service.service_id;
+
+                            return (
+                              <TouchableOpacity
+                                key={service.service_id}
+                                activeOpacity={0.7}
+                                onPress={() => {
+                                  setSelectedService(service);
+                                  setPickDentist('');
+                                  setPickDay('');
+                                  setPickTime('');
+                                  setDate(null);
+                                  setError('');
+                                }}
+                                className={`px-4 py-3 rounded-2xl border-2 ${
+                                  active
+                                    ? 'bg-sky-500 border-sky-500'
+                                    : 'bg-white border-slate-100'
+                                }`}
+                              >
+                                <Text
+                                  className={`text-sm font-bold ${
+                                    active ? 'text-white' : 'text-slate-600'
+                                  }`}
+                                >
+                                  {service.service_name}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View>
+                    <Text className="text-xl font-bold text-slate-800 mb-4">
+                      2. Select Dentist
+                    </Text>
+
+                    {filteredDentists.length === 0 ? (
+                      <Text className="text-sm text-slate-500 italic ml-1">
+                        Please select a service first, or no dentists are available.
                       </Text>
-                      <View className="flex-row flex-wrap gap-2">
-                        {servicesByType[typeName].map(service => {
-                          const active =
-                            selectedService?.service_id === service.service_id;
-                          return (
+                    ) : (
+                      filteredDentists.map(dentist => {
+                        const scheduleMap = buildScheduleMap(dentist);
+                        const isSelected = pickDentist === dentist.id;
+
+                        return (
+                          <View
+                            key={String(dentist.id)}
+                            className={`rounded-3xl border-2 p-5 mb-4 ${
+                              isSelected
+                                ? 'border-sky-400 bg-sky-50'
+                                : 'border-slate-100 bg-white'
+                            }`}
+                          >
                             <TouchableOpacity
-                              key={service.service_id}
+                              activeOpacity={0.7}
                               onPress={() => {
-                                setSelectedService(service);
-                                setPickDentist('');
+                                setPickDentist(dentist.id);
                                 setPickDay('');
                                 setPickTime('');
                                 setDate(null);
                                 setError('');
                               }}
-                              className={`px-3 py-2 rounded-xl border ${
-                                active
-                                  ? 'bg-indigo-600 border-indigo-600'
-                                  : 'bg-white border-slate-200'
-                              }`}
+                              className="flex-row justify-between items-center"
                             >
-                              <Text
-                                className={`text-xs font-semibold ${
-                                  active ? 'text-white' : 'text-slate-700'
-                                }`}
-                              >
-                                {service.service_name}
-                              </Text>
+                              <View className="flex-row items-center flex-1">
+                                <View
+                                  className={`w-12 h-12 rounded-full items-center justify-center mr-4 ${
+                                    isSelected ? 'bg-sky-200' : 'bg-slate-100'
+                                  }`}
+                                >
+                                  <Icon
+                                    name="account"
+                                    size={24}
+                                    color={isSelected ? '#0369a1' : '#94a3b8'}
+                                  />
+                                </View>
+                                <View className="flex-1 pr-2">
+                                  <Text className="text-lg font-bold text-slate-800">
+                                    Dr. {dentist.first_name} {dentist.last_name}
+                                  </Text>
+                                  <Text className="text-sm font-medium text-slate-500 mt-0.5">
+                                    {dentist.specialty || 'General Dentistry'}
+                                  </Text>
+                                </View>
+                              </View>
+
+                              {isSelected && (
+                                <View className="w-7 h-7 rounded-full items-center justify-center bg-sky-500">
+                                  <Icon name="check" size={16} color="#fff" />
+                                </View>
+                              )}
                             </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  ))}
 
-                  <Text className="text-lg font-bold text-slate-900 mt-4">
-                    Select Dentist & Schedule
-                  </Text>
-
-                  {filteredDentists.length === 0 ? (
-                    <Text className="text-sm text-slate-500">
-                      No dentists available for the selected service.
-                    </Text>
-                  ) : (
-                    filteredDentists.map(dentist => {
-                      const scheduleMap = buildScheduleMap(dentist);
-                      const isSelected = pickDentist === dentist.id;
-                      return (
-                        <View
-                          key={String(dentist.id)}
-                          className="border border-slate-200 rounded-2xl p-4 mb-3"
-                        >
-                          <TouchableOpacity
-                            onPress={() => {
-                              setPickDentist(dentist.id);
-                              setPickDay('');
-                              setPickTime('');
-                              setDate(null);
-                              setError('');
-                            }}
-                            className="flex-row justify-between items-center"
-                          >
-                            <View>
-                              <Text className="text-base font-semibold text-slate-900">
-                                Dr. {dentist.first_name} {dentist.last_name}
-                              </Text>
-                              <Text className="text-xs text-slate-500">
-                                {dentist.specialty || 'General Dentistry'}
-                              </Text>
-                            </View>
-                            {isSelected ? (
-                              <Icon
-                                name="check-circle"
-                                size={20}
-                                color="#4F46E5"
-                              />
-                            ) : null}
-                          </TouchableOpacity>
-
-                          {isSelected && (
-                            <View className="mt-3">
-                              {Object.keys(scheduleMap).length === 0 ? (
-                                <Text className="text-xs text-slate-500">
-                                  No schedules available.
-                                </Text>
-                              ) : (
-                                Object.entries(scheduleMap).map(
-                                  ([day, times]) => (
-                                    <View key={day} className="mt-3">
-                                      <Text className="text-xs text-slate-400 uppercase font-semibold">
+                            {isSelected && (
+                              <View className="mt-5 pt-5 border-t border-slate-200">
+                                {Object.keys(scheduleMap).length === 0 ? (
+                                  <Text className="text-sm text-slate-500 italic">
+                                    No schedules available right now.
+                                  </Text>
+                                ) : (
+                                  Object.entries(scheduleMap).map(([day, times]) => (
+                                    <View key={day} className="mb-5 last:mb-0">
+                                      <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-3">
                                         {day}
                                       </Text>
-                                      <View className="flex-row flex-wrap gap-2 mt-2">
+
+                                      <View className="flex-row flex-wrap gap-2">
                                         {times.map(time => {
-                                          const active =
-                                            pickDay === day &&
-                                            pickTime === time;
+                                          const active = pickDay === day && pickTime === time;
+
                                           return (
                                             <TouchableOpacity
                                               key={time}
+                                              activeOpacity={0.7}
                                               onPress={() => {
                                                 setPickDay(day);
                                                 setPickTime(time);
                                                 setDate(null);
                                                 setError('');
                                               }}
-                                              className={`px-3 py-1.5 rounded-lg border ${
+                                              className={`px-4 py-2.5 rounded-xl border-2 ${
                                                 active
-                                                  ? 'bg-indigo-50 border-indigo-200'
+                                                  ? 'bg-sky-500 border-sky-500'
                                                   : 'bg-white border-slate-200'
                                               }`}
                                             >
                                               <Text
-                                                className={`text-xs font-semibold ${
-                                                  active
-                                                    ? 'text-indigo-700'
-                                                    : 'text-slate-600'
+                                                className={`text-sm font-bold ${
+                                                  active ? 'text-white' : 'text-slate-600'
                                                 }`}
                                               >
                                                 {time}
@@ -451,35 +517,38 @@ export default function BookAppointmentModal({
                                         })}
                                       </View>
                                     </View>
-                                  ),
-                                )
-                              )}
-
-                              {pickDentist === dentist.id &&
-                                pickDay &&
-                                pickTime && (
-                                  <View className="mt-4">
-                                    <Text className="text-xs text-slate-400 uppercase font-semibold">
-                                      Select Date
-                                    </Text>
-                                    <TouchableOpacity
-                                      onPress={() => setShowDatePicker(true)}
-                                      className="border border-slate-200 rounded-xl px-3 py-3 mt-2"
-                                    >
-                                      <Text className="text-slate-900">
-                                        {date
-                                          ? date.toLocaleDateString()
-                                          : 'Pick a date'}
-                                      </Text>
-                                    </TouchableOpacity>
-                                  </View>
+                                  ))
                                 )}
-                            </View>
-                          )}
-                        </View>
-                      );
-                    })
-                  )}
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })
+                    )}
+
+                    {pickDentist && pickDay && pickTime && (
+                      <View className="mt-4">
+                        <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-2 ml-1">
+                          3. Confirm Date
+                        </Text>
+
+                        <TouchableOpacity
+                          onPress={() => setShowDatePicker(true)}
+                          activeOpacity={0.7}
+                          className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                        >
+                          <Text
+                            className={`text-base font-medium ${
+                              date ? 'text-slate-900' : 'text-slate-400'
+                            }`}
+                          >
+                            {date ? date.toLocaleDateString() : 'Pick a specific date...'}
+                          </Text>
+                          <Icon name="calendar" size={22} color="#94a3b8" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
 
                   {showDatePicker && (
                     <DateTimePicker
@@ -492,88 +561,135 @@ export default function BookAppointmentModal({
                 </View>
               )}
 
+              {/* STEP 3 */}
               {step === 3 && (
-                <View className="space-y-5">
-                  <Text className="text-lg font-bold text-slate-900">
-                    Appointment Details
-                  </Text>
+                <View className="space-y-7">
+                  <View>
+                    <Text className="text-xl font-bold text-slate-800 mb-4">
+                      Review & Confirm
+                    </Text>
 
-                  <View className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
-                    <Text className="text-xs text-slate-400 uppercase font-semibold">
-                      Summary
-                    </Text>
-                    <Text className="text-sm text-slate-700 mt-2">
-                      {selectedService?.service_name || 'Service'} •{' '}
-                      {selectedDentist
-                        ? `Dr. ${selectedDentist.first_name} ${selectedDentist.last_name}`
-                        : 'Dentist'}
-                    </Text>
-                    <Text className="text-xs text-slate-500 mt-1">
-                      {date ? date.toLocaleDateString() : 'Date'} •{' '}
-                      {pickTime || 'Time'} ({pickDay || 'Day'})
-                    </Text>
+                    <View className="bg-sky-50 border border-sky-100 rounded-3xl p-5 space-y-4">
+                      <View className="flex-row items-center">
+                        <View className="w-8 h-8 rounded-full bg-white items-center justify-center mr-3">
+                          <Icon name="clipboard-text-outline" size={16} color="#0ea5e9" />
+                        </View>
+                        <Text className="text-base font-bold text-slate-800 flex-1">
+                          {selectedService?.service_name || 'Service'}
+                        </Text>
+                      </View>
+
+                      <View className="flex-row items-center">
+                        <View className="w-8 h-8 rounded-full bg-white items-center justify-center mr-3">
+                          <Icon name="account" size={16} color="#0ea5e9" />
+                        </View>
+                        <Text className="text-base font-medium text-slate-700 flex-1">
+                          {selectedDentist
+                            ? `Dr. ${selectedDentist.first_name} ${selectedDentist.last_name}`
+                            : 'Dentist'}
+                        </Text>
+                      </View>
+
+                      <View className="flex-row items-center">
+                        <View className="w-8 h-8 rounded-full bg-white items-center justify-center mr-3">
+                          <Icon name="calendar-clock" size={16} color="#0ea5e9" />
+                        </View>
+                        <Text className="text-base font-medium text-slate-700 flex-1">
+                          {date?.toLocaleDateString()} at {pickTime} ({pickDay})
+                        </Text>
+                      </View>
+                    </View>
                   </View>
 
-                  <Text className="text-sm font-semibold text-slate-900">
-                    Appointment Type
-                  </Text>
-                  <View className="flex-row flex-wrap gap-2">
-                    {appointmentTypes.map(type => {
-                      const active = selectedAppointmentTypeId === type.id;
-                      return (
-                        <TouchableOpacity
-                          key={type.id}
-                          onPress={() => setSelectedAppointmentTypeId(type.id)}
-                          className={`px-3 py-2 rounded-xl border ${
-                            active
-                              ? 'bg-indigo-600 border-indigo-600'
-                              : 'bg-white border-slate-200'
-                          }`}
-                        >
-                          <Text
-                            className={`text-xs font-semibold ${
-                              active ? 'text-white' : 'text-slate-700'
+                  <View>
+                    <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 my-2 ml-1">
+                      Patient Type
+                    </Text>
+
+                    <View className="flex-row flex-wrap gap-2 my-2">
+                      {appointmentTypes.map(type => {
+                        const active = selectedAppointmentTypeId === type.id;
+
+                        return (
+                          <TouchableOpacity
+                            key={type.id}
+                            activeOpacity={0.7}
+                            onPress={() => setSelectedAppointmentTypeId(type.id)}
+                            className={`px-5 py-3.5 rounded-2xl border-2 flex-row items-center ${
+                              active
+                                ? 'bg-sky-500 border-sky-500'
+                                : 'bg-white border-slate-100'
                             }`}
                           >
-                            {type.appointment_name}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                            <Icon
+                              name={type.id === 2 ? 'account-group' : 'account'}
+                              size={18}
+                              color={active ? '#fff' : '#64748b'}
+                              className="mr-2"
+                            />
+                            <Text
+                              className={`text-sm font-bold ${
+                                active ? 'text-white' : 'text-slate-700'
+                              }`}
+                            >
+                              {type.appointment_name}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                   </View>
 
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-sm font-semibold text-slate-900">
-                      Emergency
-                    </Text>
+                  <View className="bg-white border border-slate-200 rounded-[24px] p-5 flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-base font-bold text-slate-800">
+                        Emergency Visit
+                      </Text>
+                      <Text className="text-sm text-slate-500 mt-0.5">
+                        Is this booking urgent?
+                      </Text>
+                    </View>
                     <Switch
                       value={isEmergency}
                       onValueChange={setIsEmergency}
+                      trackColor={{ true: '#0ea5e9', false: '#cbd5e1' }}
                     />
                   </View>
 
-                  <Text className="text-sm font-semibold text-slate-900">
-                    Message (optional)
-                  </Text>
-                  <TextInput
-                    className="border border-slate-200 rounded-xl px-3 py-2 text-slate-900"
-                    placeholder="Additional notes..."
-                    value={message}
-                    onChangeText={setMessage}
-                    multiline
-                  />
+                  <View>
+                    <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-3 ml-1">
+                      Additional Notes (Optional)
+                    </Text>
+                    <TextInput
+                      className="bg-slate-50 border border-slate-200 rounded-[24px] px-5 py-4 min-h-[120px] text-base text-slate-900"
+                      placeholder="Symptoms, concerns, or special requests..."
+                      placeholderTextColor="#94a3b8"
+                      value={message}
+                      onChangeText={setMessage}
+                      multiline
+                      textAlignVertical="top"
+                    />
+                  </View>
                 </View>
               )}
 
+              {/* Error Display */}
               {error ? (
-                <Text className="text-rose-600 text-sm mt-4">{error}</Text>
+                <View className="mt-6 bg-rose-50 border border-rose-100 rounded-2xl px-5 py-4 flex-row items-center">
+                  <Icon name="alert-circle-outline" size={20} color="#e11d48" className="mr-3" />
+                  <Text className="text-rose-600 font-semibold flex-1 leading-5">
+                    {error}
+                  </Text>
+                </View>
               ) : null}
             </ScrollView>
           )}
 
+          {/* Absolute Footer */}
           {!loading && (
-            <View className="flex-row gap-3 px-5 py-4 border-t border-slate-100">
+            <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-5 flex-row gap-4">
               <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() => {
                   if (step === 1) {
                     handleClose();
@@ -581,14 +697,15 @@ export default function BookAppointmentModal({
                     setStep(prev => (prev === 2 ? 1 : 2));
                   }
                 }}
-                className="flex-1 border border-slate-200 rounded-xl py-3 items-center"
+                className="flex-1 bg-white border-2 border-slate-200 rounded-2xl py-4 items-center justify-center"
               >
-                <Text className="text-slate-600 font-semibold">
-                  {step === 1 ? 'Close' : 'Back'}
+                <Text className="font-bold text-slate-600 tracking-wide">
+                  {step === 1 ? 'Cancel' : 'Go Back'}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
+                activeOpacity={0.8}
                 onPress={() => {
                   if (step === 1) {
                     if (bookingMethod !== 'self') {
@@ -599,26 +716,25 @@ export default function BookAppointmentModal({
                     setStep(2);
                     return;
                   }
+
                   if (step === 2) {
                     if (!canContinue) {
-                      setError(
-                        'Please complete service, dentist, time, and date.',
-                      );
+                      setError('Please complete service, dentist, time, and date.');
                       return;
                     }
                     setError('');
                     setStep(3);
                     return;
                   }
+
                   if (step === 3) {
                     handleSubmit();
-                    return;
                   }
                 }}
-                className="flex-1 bg-indigo-600 rounded-xl py-3 items-center"
+                className="flex-1 bg-sky-500 rounded-2xl py-4 items-center justify-center"
               >
-                <Text className="text-white font-semibold">
-                  {step === 3 ? 'Submit' : 'Next'}
+                <Text className="font-bold text-white tracking-wide text-base">
+                  {step === 3 ? 'Confirm Visit' : 'Next Step'}
                 </Text>
               </TouchableOpacity>
             </View>

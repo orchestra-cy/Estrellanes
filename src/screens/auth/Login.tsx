@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Pressable,
 } from 'react-native';
 
 //api
@@ -18,10 +17,9 @@ import { google_auth_api } from '../../app/api/auth';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { ROUTES, IMG } from '../../utils';
-import { authLogin } from '../../app/action';
+import { authLogin, authLoginGoogle } from '../../app/action';
 import { LoginDOT } from '../../types/api.auth.types';
 import sign_in_with_google from '../../utils/firebase';
-import { authLoginGoogle } from '../../app/action';
 
 import { showSuccess } from '../../components/alert_message';
 
@@ -44,8 +42,6 @@ export default function Login() {
       const response = await sign_in_with_google();
       if (response) {
         const idToken = response?.userInfo?.idToken;
-        console.log('Login Success:', response);
-        console.log('Token is :', idToken);
         if (!idToken) {
           console.log('No token received from Google Sign-In');
           return;
@@ -53,7 +49,7 @@ export default function Login() {
 
         const apiResponse = await google_auth_api(idToken);
         const data = await apiResponse.json();
-        console.log('api data is:', data);
+        
         if (data?.token) {
           dispatch(authLoginGoogle(data.token));
           showSuccess({
@@ -71,8 +67,6 @@ export default function Login() {
       }
     } catch (error) {
       console.error('Sign-in crashed:', error);
-    } finally {
-      console.log('Google Sign-In process completed');
     }
   };
 
@@ -82,8 +76,8 @@ export default function Login() {
       className="flex-1"
       resizeMode="cover"
     >
-      {/* Semi-transparent overlay to ensure background doesn't overpower the foreground */}
-      <View className="flex-1 bg-slate-900/40 justify-center">
+      {/* Darkened overlay to ensure the white card pops */}
+      <View className="flex-1 bg-slate-900/60 justify-center">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
@@ -94,12 +88,12 @@ export default function Login() {
             className="px-5"
           >
             {/* Main Floating Card */}
-            <View className="bg-white rounded-[32px] px-8 py-10 shadow-2xl elevation-5 my-10">
+            <View className="bg-white rounded-[32px] px-6 py-8 shadow-2xl elevation-5 my-10 mx-1">
               {/* Logo & Enhanced Welcome Header */}
               <View className="items-center mb-8">
                 <Image
                   source={IMG.LOGO}
-                  className="w-24 h-24 mb-6"
+                  className="w-20 h-20 mb-4"
                   resizeMode="contain"
                 />
                 <Text className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2 text-center">
@@ -112,14 +106,14 @@ export default function Login() {
               </View>
 
               {/* Form Container */}
-              <View className="space-y-6">
+              <View className="space-y-5">
                 {/* Username Input */}
                 <View>
                   <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
                     Username
                   </Text>
                   <TextInput
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-base text-slate-900 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-base text-slate-900 font-medium"
                     placeholder="Enter your username"
                     placeholderTextColor="#94a3b8"
                     value={username}
@@ -134,7 +128,7 @@ export default function Login() {
                     Password
                   </Text>
                   <TextInput
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-base text-slate-900 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-base text-slate-900 font-medium"
                     placeholder="Enter your password"
                     placeholderTextColor="#94a3b8"
                     value={password}
@@ -143,17 +137,17 @@ export default function Login() {
                   />
                 </View>
 
-                {/* Optional: Forgot Password Link */}
-                <TouchableOpacity className="self-end mt-1">
+                {/* Forgot Password Link */}
+                <TouchableOpacity className="self-end mt-2">
                   <Text className="text-sky-500 text-sm font-semibold">
                     Forgot Password?
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Login Button */}
+              {/* Primary Login Button */}
               <TouchableOpacity
-                className="w-full bg-sky-500 py-4 rounded-2xl items-center mt-8 shadow-md shadow-sky-500/30"
+                className="w-full bg-sky-500 py-4 rounded-2xl items-center mt-6 shadow-md shadow-sky-500/30"
                 onPress={handleLogin}
                 activeOpacity={0.8}
               >
@@ -161,24 +155,29 @@ export default function Login() {
                   Sign In
                 </Text>
               </TouchableOpacity>
-              <View className="px-6 max-w-sm">
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  className="w-full bg-[#4285F4] rounded-lg px-5 py-2.5 mb-2"
-                  onPress={handleLoginGoogle}
-                >
-                  <View className="flex-row items-center justify-center">
-                    {/* Simple "G" instead of SVG/icon */}
-                    <Text className="text-white text-base mr-2 font-bold">
-                      G
-                    </Text>
 
-                    <Text className="text-white text-sm font-medium">
-                      Sign up with Google
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+              {/* Divider */}
+              <View className="flex-row items-center my-6">
+                <View className="flex-1 h-[1px] bg-slate-200" />
+                <Text className="text-slate-400 font-medium px-4 text-xs uppercase tracking-wider">
+                  Or continue with
+                </Text>
+                <View className="flex-1 h-[1px] bg-slate-200" />
               </View>
+
+              {/* Google Button */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                className="w-full bg-white border border-slate-200 rounded-2xl py-4 flex-row items-center justify-center shadow-sm"
+                onPress={handleLoginGoogle}
+              >
+                <Text className="text-[#4285F4] text-xl font-extrabold mr-3">
+                  G
+                </Text>
+                <Text className="text-slate-700 text-base font-bold">
+                  Continue with Google
+                </Text>
+              </TouchableOpacity>
 
               {/* Register Link */}
               <View className="flex-row items-center justify-center mt-8">

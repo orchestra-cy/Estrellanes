@@ -2,7 +2,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { View, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/patient/HomeScreen';
 import ProfileScreen from '../screens/global/ProfileScreen';
-import HistoryScreen from '../screens/patient/HistoryScreen';
+import HistoryScreen from '../screens/global/HistoryScreen';
 import AppointmentsScreen from '../screens/patient/AppointmentsScreen';
 import { ROUTES } from '../utils';
 import BottomNav from '../components/BottomNav';

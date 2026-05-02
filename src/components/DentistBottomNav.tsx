@@ -18,43 +18,46 @@ export default function DentistBottomNav() {
       <View style={styles.container}>
         <TouchableOpacity
           style={styles.tab}
+          activeOpacity={0.7}
           onPress={() => navigation.navigate(ROUTES.DENTIST_HOME)}
         >
-          <Icon name="view-dashboard" size={26} color="#333" />
+          <Icon name="view-dashboard-outline" size={28} color="#64748b" />
           <Text style={styles.label}>Dashboard</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.tab}
+          activeOpacity={0.7}
           onPress={() => navigation.navigate(ROUTES.DENTIST_APPOINTMENTS)}
         >
-          <Icon name="calendar-check" size={26} color="#333" />
-          <Text style={styles.label}>Appointments</Text>
+          <Icon name="calendar-check-outline" size={28} color="#64748b" />
+          <Text style={styles.label}>Schedule</Text>
         </TouchableOpacity>
-
-       
 
         <TouchableOpacity
           style={styles.tab}
+          activeOpacity={0.7}
           onPress={() => navigation.navigate(ROUTES.DENTIST_HISTORY)}
         >
-          <Icon name="history" size={26} color="#333" />
+          <Icon name="clock-time-four-outline" size={28} color="#64748b" />
           <Text style={styles.label}>History</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.tab}
+          activeOpacity={0.7}
           onPress={() => navigation.navigate(ROUTES.DENTIST_SETTINGS)}
         >
-          <Icon name="cog" size={26} color="#333" />
+          <Icon name="cog-outline" size={28} color="#64748b" />
           <Text style={styles.label}>Settings</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.tab}
+          activeOpacity={0.7}
           onPress={() => navigation.navigate(ROUTES.PROFILE)}
         >
-          <Icon name="account" size={26} color="#333" />
+          <Icon name="account-outline" size={28} color="#64748b" />
           <Text style={styles.label}>Profile</Text>
         </TouchableOpacity>
       </View>
@@ -64,24 +67,34 @@ export default function DentistBottomNav() {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: '#f1f5f9',
+    // Added soft shadow for a seamless, floating effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 8,
   },
   container: {
     flexDirection: 'row',
-    height: 60,
+    height: 70, // Slightly taller for better touch targets
     justifyContent: 'space-around',
     alignItems: 'center',
+    paddingHorizontal: 8,
   },
   tab: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+    paddingVertical: 8,
   },
   label: {
     fontSize: 10,
-    color: '#333',
-    marginTop: 2,
+    color: '#64748b', // Modern slate gray
+    marginTop: 4,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });
