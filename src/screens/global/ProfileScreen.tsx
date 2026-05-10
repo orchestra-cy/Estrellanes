@@ -7,8 +7,8 @@ import {
   ScrollView,
   SafeAreaView,
   TextInput,
+  DeviceEventEmitter,
 } from 'react-native';
-
 
 import { useDispatch } from 'react-redux';
 import { authLogout } from '../../app/action';
@@ -16,9 +16,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { GetUserInfo, ChangePassword } from '../../app/api/user';
 import { Alert, ActivityIndicator } from 'react-native';
 
-
 import { ChangePassDOT } from '../../types/api.user.types';
-
 
 export default function ProfileScreen() {
   const dispatch = useDispatch();
@@ -84,6 +82,10 @@ export default function ProfileScreen() {
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred.' + error);
     }
+  };
+
+  const handleLogout = () => {
+    dispatch(authLogout());
   };
 
   if (loading) {
@@ -280,7 +282,7 @@ export default function ProfileScreen() {
         {__DEV__ && (
           <TouchableOpacity
             className="flex-row items-center justify-center mx-5 mt-8 p-4 bg-red-50 rounded-xl border border-red-100"
-            onPress={() => dispatch(authLogout())}
+            onPress={handleLogout}
           >
             <Icon name="logout" size={20} color="#EF4444" />
             <Text className="text-red-500 font-bold ml-2">

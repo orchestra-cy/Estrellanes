@@ -11,9 +11,15 @@ import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { GetUserInfo } from '../app/api/user';
 
+// Global Services
+import { notificationManager } from '../utils/NotificationManager';
+import { update_fcm_token } from '../app/api/fcm_token';
+import { wsManager } from '../utils/WebsocketManager';
+import { showSuccess } from '../components/alert_message';
+
 // types
 import { UserInfoDOT } from '../types/api.auth.types';
-
+import { WebSocketMessage } from '../types/websockets.types';
 const { store, persistor, runSaga } = configureStore();
 runSaga(rootSaga);
 
@@ -27,6 +33,7 @@ interface RootState {
 }
 
 type Role = 'DENTIST' | 'PATIENT';
+
 
 const normalizeRole = (roles?: string[] | string | null): Role | null => {
   if (!roles) return null;
@@ -68,9 +75,10 @@ function GateContent() {
 
   const hasAuth = Boolean(auth?.token);
   const roleFromStore = normalizeRole(auth?.userData?.roles);
-
   const activeRole = roleFromStore || fetchedRole;
+  const authToken = typeof auth?.token === 'string' ? auth.token : null;
 
+  // get user
   useEffect(() => {
     if (!hasAuth) {
       setFetchedRole(null);
@@ -78,7 +86,6 @@ function GateContent() {
       return;
     }
 
-    // If Redux already knows the role upon login, skip the API call entirely
     if (roleFromStore) {
       setIsFetchingRole(false);
       return;
@@ -87,9 +94,7 @@ function GateContent() {
     let isMounted = true;
     setIsFetchingRole(true);
 
-    const tokenOverride = typeof auth?.token === 'string' ? auth.token : null;
-
-    GetUserInfo(tokenOverride)
+    GetUserInfo(authToken)
       .then((info: UserInfoDOT) => {
         if (!isMounted) return;
         setFetchedRole(normalizeRole(info?.user?.roles));
@@ -107,7 +112,82 @@ function GateContent() {
     return () => {
       isMounted = false;
     };
-  }, [auth?.token, hasAuth, roleFromStore]);
+  }, [authToken, hasAuth, roleFromStore]);
+
+  // fcm support notificaiton
+  useEffect(() => {
+    let unsubscribeFCM: (() => void) | undefined;
+
+    const initializeNotifications = async () => {
+      try {
+        const hasPermission = await notificationManager.requestPermission();
+        if (!hasPermission) return;
+
+        const token = await notificationManager.getDeviceToken();
+        await update_fcm_token(token.toString());
+
+        unsubscribeFCM = notificationManager.setupForegroundHandler();
+      } catch (error) {
+        console.error('Notification setup error:', error);
+      }
+    };
+
+    initializeNotifications();
+
+    return () => {
+      unsubscribeFCM?.();
+    };
+  }, []);
+
+  // websocket auto-connect and disconnect 
+  useEffect(() => {
+    let unsubscribeNotification: (() => void) | undefined;
+    let unsubscribeConnected: (() => void) | undefined;
+    let unsubscribeDisconnected: (() => void) | undefined;
+
+    try {
+      if (!authToken) {
+        wsManager.disconnect();
+        console.log('Logged out: WebSocket disconnected natively via Redux');
+        return;
+      }
+
+      wsManager.connect(authToken);
+      console.log('WebSocket connected with token');
+
+      unsubscribeNotification = wsManager.on(
+        'notification',
+        (payload: WebSocketMessage) => {
+          console.log('payload is', payload);
+          showSuccess({
+            title: payload.title,
+            message: payload.message,
+            type: 'success',
+            position: 'top',
+            visibilityTime: 3000,
+          });
+        },
+      );
+
+      unsubscribeConnected = wsManager.on('connected', () =>
+        console.log('WebSocket Connected'),
+      );
+      
+      unsubscribeDisconnected = wsManager.on('disconnected', () =>
+        console.log('WebSocket Disconnected'),
+      );
+      
+    } catch (error) {
+      console.error('WebSocket error:', error);
+    }
+
+    return () => {
+      unsubscribeNotification?.();
+      unsubscribeConnected?.();
+      unsubscribeDisconnected?.();
+      wsManager.disconnect();
+    };
+  }, [authToken]); 
 
   if (hasAuth && (!activeRole || isFetchingRole)) {
     return (

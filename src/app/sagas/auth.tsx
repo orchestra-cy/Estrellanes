@@ -17,6 +17,9 @@ import {
 } from '../../types/reducer.auth.types';
 import { UserLoginResult } from '../../types/api.user.types';
 
+// alert
+import { showSuccess } from '../../components/alert_message';
+
 export function* userLoginAsync(action: UserLoginAction) {
   try {
     console.log('USER_LOGIN');
@@ -34,6 +37,13 @@ export function* userLoginAsync(action: UserLoginAction) {
     console.log('the result is', result);
     if (result) {
       if (result.ok === true) {
+        showSuccess({
+          title: 'Login Successfull',
+          message: 'Welcome back!',
+          type: 'success',
+          position: 'top',
+          visibilityTime: 3000,
+        });
         const payload: { token: string } = { token: result.token };
         console.log('Login successful, payload:', result.token);
         console.log('USER_LOGIN_SUCCESS');
