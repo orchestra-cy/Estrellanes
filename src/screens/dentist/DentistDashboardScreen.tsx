@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,12 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { fetchDentistAppointments } from '../../app/api/dentist';
 import type { DentistAppointmentItem } from '../../types/dentist.types';
+
+// websocket wsManager
+import { wsManager } from '../../utils/WebsocketManager';
+
+// types
+import { WebSocketMessage } from '../../types/websockets.types';
 
 const formatName = (first?: string, last?: string) => {
   const full = `${first || ''} ${last || ''}`.trim();
@@ -32,15 +38,17 @@ export default function DentistDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = async () => {
-    setLoading(true);
+  const load = useCallback(async (isBackgroundRefresh = false) => {
+    if (!isBackgroundRefresh) setLoading(true); 
     try {
       const data = await fetchDentistAppointments();
       if (data?.status === 'ok' && Array.isArray(data.appointments)) {
         const formatted = data.appointments.map((item: any) => {
           const appt = item.appointment || {};
           const patient = item.patient || {};
-          const schedule = item.schedule || (Array.isArray(item.schedules) ? item.schedules[0] : {});
+          const schedule =
+            item.schedule ||
+            (Array.isArray(item.schedules) ? item.schedules[0] : {});
 
           return {
             id: String(appt.id ?? appt.appointment_id ?? ''),
@@ -71,23 +79,42 @@ export default function DentistDashboardScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
 
+    const unsubscribe = wsManager.on(
+      'notification',
+      (payload: WebSocketMessage) => {
+        console.log("WebSocket Received:", payload);
+        if (payload.type === 'new_appointment' || payload.type === 'appointment_updated_by_patient') {
+          load(true); 
+        }
+      },
+    );
+
+    return () => unsubscribe();
+  }, [load]);
+
+  // 3. Reactively calculate stats based on the latest appointments array
   const stats = useMemo(() => {
     const total = appointments.length;
-    const uniquePatients = new Set(appointments.map((a) => a.patient_name)).size;
-    const emergencies = appointments.filter((a) => a.emergency).length;
+    const uniquePatientsCount = new Set(appointments.map(a => a.patient_name)).size;
+    const emergenciesCount = appointments.filter(a => a.emergency).length;
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayCount = appointments.filter((a) => a.date?.startsWith(todayStr)).length;
+    const todaysCount = appointments.filter(a => a.date?.startsWith(todayStr)).length;
 
-    return { total, uniquePatients, emergencies, todayCount };
+    return {
+      appointmentCount: total,
+      uniquePatients: uniquePatientsCount,
+      emergencies: emergenciesCount,
+      todayCount: todaysCount,
+    };
   }, [appointments]);
 
-  if (loading) {
+
+  if (loading && appointments.length === 0) {
     return (
       <View className="flex-1 justify-center items-center bg-slate-50 p-5">
         <ActivityIndicator size="large" color="#0ea5e9" />
@@ -110,7 +137,7 @@ export default function DentistDashboardScreen() {
         <Text className="text-slate-500 text-center mb-8 px-4">{error}</Text>
         <TouchableOpacity
           className="bg-sky-500 py-3.5 px-8 rounded-xl shadow-sm shadow-sky-500/30"
-          onPress={load}
+          onPress={() => load()}
           activeOpacity={0.8}
         >
           <Text className="text-white font-bold tracking-wide">Try Again</Text>
@@ -136,7 +163,7 @@ export default function DentistDashboardScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={load}
+            onPress={() => load()}
             activeOpacity={0.7}
             className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm border border-slate-100"
           >
@@ -153,7 +180,7 @@ export default function DentistDashboardScreen() {
                 <Icon name="calendar-multiple" size={20} color="#0ea5e9" />
               </View>
               <Text className="text-2xl font-extrabold text-slate-800">
-                {stats.total}
+                {stats.appointmentCount}
               </Text>
               <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
                 Total Visits
@@ -220,14 +247,17 @@ export default function DentistDashboardScreen() {
               </Text>
             </View>
           ) : (
-            appointments.slice(0, 5).map((appt) => (
+            appointments.slice(0, 5).map(appt => (
               <View
                 key={appt.id}
                 className="bg-white p-4 rounded-[20px] mb-3 shadow-sm border border-slate-100 flex-row items-center justify-between"
               >
                 <View className="flex-1 pr-3">
                   <View className="flex-row items-center mb-1">
-                    <Text className="text-base font-bold text-slate-800" numberOfLines={1}>
+                    <Text
+                      className="text-base font-bold text-slate-800"
+                      numberOfLines={1}
+                    >
                       {appt.patient_name}
                     </Text>
                     {appt.emergency && (
@@ -238,13 +268,17 @@ export default function DentistDashboardScreen() {
                       </View>
                     )}
                   </View>
-                  
+
                   <Text className="text-xs font-medium text-slate-500 mb-2.5">
                     {appt.service_name || 'General Checkup'}
                   </Text>
-                  
+
                   <View className="flex-row items-center bg-slate-50 self-start px-2 py-1 rounded-lg border border-slate-100">
-                    <Icon name="calendar-clock-outline" size={14} color="#0ea5e9" />
+                    <Icon
+                      name="calendar-clock-outline"
+                      size={14}
+                      color="#0ea5e9"
+                    />
                     <Text className="text-[11px] text-slate-600 font-bold ml-1.5">
                       {appt.date || 'TBD'} • {appt.time_slot || 'Time TBD'}
                     </Text>
@@ -252,7 +286,9 @@ export default function DentistDashboardScreen() {
                 </View>
 
                 <View className="items-end">
-                  <View className={`px-2.5 py-1 rounded-md border ${getStatusColor(appt.status)}`}>
+                  <View
+                    className={`px-2.5 py-1 rounded-md border ${getStatusColor(appt.status)}`}
+                  >
                     <Text className="text-[10px] font-extrabold uppercase tracking-widest">
                       {appt.status}
                     </Text>

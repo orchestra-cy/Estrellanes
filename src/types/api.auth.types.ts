@@ -35,4 +35,5 @@ export interface UserInfoDOT {
       disable: null | string | number,
       roles: string[]
   }
+  code?:number | null
 }

@@ -15,7 +15,11 @@ import { AppointmentDOT } from '../../types/screen.appointment.types';
 import BookAppointmentModal from './crud_appointment/BookAppointmentModal';
 import AppointmentDetailsModal from './crud_appointment/AppointmentDetailsModal';
 import EditAppointmentModal from './crud_appointment/EditAppointmentModal';
-import { deleteAppointment } from '../../app/api/patient';
+import { wsManager } from '../../utils/WebsocketManager';
+
+
+// types
+import { WebSocketMessage } from '../../types/websockets.types';
 
 const getStatusColor = (status: string) => {
   switch (status?.toLowerCase()) {
@@ -43,6 +47,34 @@ export default function AppointmentsScreen() {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+  // listens to notification and extracts data
+    const unsubscribe = wsManager.on('notification', (payload:WebSocketMessage) => {
+      if (payload.type === 'appointment_update') {
+        setAppointmentsData((prevData: AppointmentDOT) =>
+          prevData.map((item: AppointmentDOT) => {
+            if (
+              item.appointment &&
+              item.appointment.id === payload.appointmentId
+            ) {
+              return {
+                ...item,
+                appointment: {
+                  ...item.appointment,
+                  status: payload.newStatus.toLowerCase(), 
+                },
+              };
+            }
+            return item; 
+          }),
+        );
+      }
+    });
+
+    // Cleanup the listener when the user leaves the screen
+    return () => unsubscribe();
+  }, []);
 
   const loadAppointments = useCallback(async () => {
     setLoading(true);

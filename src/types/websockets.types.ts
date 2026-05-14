@@ -3,4 +3,5 @@ export interface WebSocketMessage {
   message: string;
   newStatus: string;
   title: string;
+  type:string | null
 }

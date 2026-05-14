@@ -17,6 +17,13 @@ import type {
   HistoryItem,
   HistoryResponse,
 } from '../../types/patient.history.types';
+import type { WebSocketMessage } from '../../types/websockets.types';
+
+
+// websocket wsManager
+import { wsManager } from '../../utils/WebsocketManager';
+
+
 
 interface RootState {
   auth: {
@@ -105,8 +112,17 @@ export default function HistoryScreen() {
 
     loadHistory();
 
+    const unsubscribe = wsManager.on(
+      'notification',
+      (payload: WebSocketMessage) => {
+        console.log('WebSocket Received:', payload);
+        loadHistory();
+      },
+    );
+
     return () => {
       isMounted = false;
+      unsubscribe();
     };
   }, [auth?.userData?.id, auth?.userData?.roles]);
 

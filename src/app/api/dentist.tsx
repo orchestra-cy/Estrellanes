@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 // types
-import { ReminderPayloadSlot,ReminderPayloadDay } from '../../types/reminder';
 const BaseUrl = 'http://127.0.0.1:8000/api';
 
 const getToken = async () => {
