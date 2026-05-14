@@ -20,6 +20,10 @@ import { showSuccess } from '../components/alert_message';
 // types
 import { UserInfoDOT } from '../types/api.auth.types';
 import { WebSocketMessage } from '../types/websockets.types';
+
+// function 
+import { authLogout } from '../app/action';
+import { useDispatch } from 'react-redux';
 const { store, persistor, runSaga } = configureStore();
 runSaga(rootSaga);
 
@@ -73,11 +77,15 @@ function GateContent() {
   const [fetchedRole, setFetchedRole] = useState<Role | null>(null);
   const [isFetchingRole, setIsFetchingRole] = useState(false);
 
+  // initialize
   const hasAuth = Boolean(auth?.token);
   const roleFromStore = normalizeRole(auth?.userData?.roles);
   const activeRole = roleFromStore || fetchedRole;
   const authToken = typeof auth?.token === 'string' ? auth.token : null;
 
+  // authentication studd
+  const dispatch = useDispatch();
+  
   // get user
   useEffect(() => {
     if (!hasAuth) {
@@ -97,6 +105,10 @@ function GateContent() {
     GetUserInfo(authToken)
       .then((info: UserInfoDOT) => {
         if (!isMounted) return;
+        if (info?.code == 401) {
+          dispatch(authLogout());
+          return;
+        }
         setFetchedRole(normalizeRole(info?.user?.roles));
       })
       .catch(err => {
