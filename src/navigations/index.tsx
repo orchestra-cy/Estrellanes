@@ -156,6 +156,7 @@ function GateContent() {
     let unsubscribeNotification: (() => void) | undefined;
     let unsubscribeConnected: (() => void) | undefined;
     let unsubscribeDisconnected: (() => void) | undefined;
+    let unsubscribeJWTChecker: (() => void) | undefined;
 
     try {
       if (!authToken) {
@@ -178,6 +179,14 @@ function GateContent() {
             position: 'top',
             visibilityTime: 3000,
           });
+        },
+      );
+
+      unsubscribeJWTChecker = wsManager.on(
+        'auth_error',
+        (payload: WebSocketMessage) => {
+          console.log('payload is', payload);
+          dispatch(authLogout());
         },
       );
 
