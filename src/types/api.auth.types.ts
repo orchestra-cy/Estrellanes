@@ -1,6 +1,7 @@
 export interface LoginDOT {
   username: string,
   password: string,
+  onComplete?: () => void // only used for login so optional ra
 }
 
 export interface RegisterDOT {

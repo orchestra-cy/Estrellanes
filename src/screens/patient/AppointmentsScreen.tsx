@@ -2,34 +2,80 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView, // Changed from FlatList
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
-  Alert,
-  RefreshControl, // Added for pull-to-refresh
+  RefreshControl,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { FetchAppointment } from '../../app/api/appointment';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import DeleteAppointmentAPI, {
+  FetchAppointment,
+} from '../../app/api/appointment';
 import { AppointmentDOT } from '../../types/screen.appointment.types';
 import BookAppointmentModal from './crud_appointment/BookAppointmentModal';
 import AppointmentDetailsModal from './crud_appointment/AppointmentDetailsModal';
 import EditAppointmentModal from './crud_appointment/EditAppointmentModal';
 import { wsManager } from '../../utils/WebsocketManager';
 
+// alert
 
 // types
 import { WebSocketMessage } from '../../types/websockets.types';
+import { showInfo } from '../../components/alert_message';
 
-const getStatusColor = (status: string) => {
+// Helper to format the date to "May 16, 2026"
+const formatAppointmentDate = (dateString?: string) => {
+  if (!dateString) return 'Date TBD';
+  try {
+    const date = new Date(dateString);
+    // Check if valid date
+    if (isNaN(date.getTime())) return dateString;
+
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch (e) {
+    return dateString;
+  }
+};
+
+// Helper to extract time (if available in your date string), otherwise fallback
+const formatAppointmentTime = (dateString?: string, fallbackTime?: string) => {
+  if (!dateString) return fallbackTime || 'Time TBD';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return fallbackTime || 'Time TBD';
+
+    // Only return time if the string likely contains it (e.g., includes 'T' or a colon)
+    if (dateString.includes('T') || dateString.includes(':')) {
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+    return fallbackTime || 'Time TBD';
+  } catch (e) {
+    return fallbackTime || 'Time TBD';
+  }
+};
+
+const getStatusStyles = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'approved':
-      return 'bg-emerald-50 border-emerald-100 text-emerald-700';
+      return {
+        bg: 'bg-emerald-50 border-emerald-100',
+        text: 'text-emerald-700',
+      };
     case 'rejected':
     case 'cancelled':
-      return 'bg-rose-50 border-rose-100 text-rose-700';
+      return { bg: 'bg-rose-50 border-rose-100', text: 'text-rose-700' };
     default:
-      return 'bg-amber-50 border-amber-100 text-amber-700';
+      return { bg: 'bg-amber-50 border-amber-100', text: 'text-amber-700' };
   }
 };
 
@@ -49,30 +95,31 @@ export default function AppointmentsScreen() {
   >(null);
 
   useEffect(() => {
-  // listens to notification and extracts data
-    const unsubscribe = wsManager.on('notification', (payload:WebSocketMessage) => {
-      if (payload.type === 'appointment_update') {
-        setAppointmentsData((prevData: AppointmentDOT) =>
-          prevData.map((item: AppointmentDOT) => {
-            if (
-              item.appointment &&
-              item.appointment.id === payload.appointmentId
-            ) {
-              return {
-                ...item,
-                appointment: {
-                  ...item.appointment,
-                  status: payload.newStatus.toLowerCase(), 
-                },
-              };
-            }
-            return item; 
-          }),
-        );
-      }
-    });
+    const unsubscribe = wsManager.on(
+      'notification',
+      (payload: WebSocketMessage) => {
+        if (payload.type === 'appointment_update') {
+          setAppointmentsData((prevData: AppointmentDOT) =>
+            prevData.map((item: AppointmentDOT) => {
+              if (
+                item.appointment &&
+                item.appointment.id === payload.appointmentId
+              ) {
+                return {
+                  ...item,
+                  appointment: {
+                    ...item.appointment,
+                    status: payload.newStatus.toLowerCase(),
+                  },
+                };
+              }
+              return item;
+            }),
+          );
+        }
+      },
+    );
 
-    // Cleanup the listener when the user leaves the screen
     return () => unsubscribe();
   }, []);
 
@@ -103,6 +150,18 @@ export default function AppointmentsScreen() {
     loadAppointments();
   }, [loadAppointments]);
 
+  const handleOpenEdit = (item: any, id: string | null) => {
+    setSelectedAppointment(item);
+    setSelectedAppointmentId(id);
+    setShowEditModal(true);
+  };
+
+  const handleOpenDetails = (item: any, id: string | null) => {
+    setSelectedAppointment(item);
+    setSelectedAppointmentId(id);
+    setShowDetailsModal(true);
+  };
+
   if (loading && !refreshing) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
@@ -120,29 +179,36 @@ export default function AppointmentsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-      {/* Static Header */}
-      <View className="flex-row justify-between items-center px-5 pt-4 pb-3">
+      {/* Enhanced Premium Header */}
+      <View className="flex-row justify-between items-end px-5 pt-6 pb-4">
         <View>
-          <Text className="text-2xl font-extrabold text-slate-800">
+          <Text className="text-3xl font-black text-slate-900 tracking-tight">
             My Visits
           </Text>
-          <Text className="text-xs font-medium text-slate-500">
-            Manage your dental appointments
+          <Text className="text-sm font-semibold text-slate-500 mt-1">
+            Manage your dental schedule
           </Text>
         </View>
         <TouchableOpacity
-          className="flex-row items-center bg-sky-500 py-2 px-3.5 rounded-xl"
+          className="flex-row items-center bg-sky-500 py-2.5 px-4 rounded-full shadow-md shadow-sky-500/40"
           onPress={() => setShowBookingModal(true)}
+          activeOpacity={0.8}
         >
-          <Icon name="plus" size={16} color="#FFF" />
-          <Text className="text-white font-bold ml-1 text-xs">Book</Text>
+          <Icon name="calendar-plus" size={18} color="#FFF" />
+          <Text className="text-white font-bold ml-1.5 text-sm tracking-wide">
+            New Visit
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Scrollable Content using Map */}
+      {/* Scrollable Content */}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 40,
+          paddingTop: 10,
+        }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -153,7 +219,7 @@ export default function AppointmentsScreen() {
         }
       >
         {appointmentsData.length === 0 ? (
-          <View className="mt-10 justify-center items-center px-8 py-12 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+          <View className="mt-10 justify-center items-center px-8 py-12 bg-white rounded-[28px] border-2 border-dashed border-slate-200">
             <Icon name="calendar-blank-outline" size={32} color="#0ea5e9" />
             <Text className="text-lg font-bold text-slate-800 mt-4">
               No upcoming visits
@@ -162,78 +228,98 @@ export default function AppointmentsScreen() {
               className="mt-6 bg-sky-50 py-3 px-5 rounded-xl"
               onPress={() => setShowBookingModal(true)}
             >
-              <Text className="text-sky-600 text-xs font-bold">
+              <Text className="text-sky-600 text-sm font-bold">
                 Schedule a visit
               </Text>
             </TouchableOpacity>
           </View>
         ) : (
-          appointmentsData.map((item, index) => {
+          appointmentsData.map((item: AppointmentDOT, index: number) => {
             const { appointment, dentist } = item;
             const status = appointment?.status || 'Pending';
+            const appointmentId = appointment?.id
+              ? String(appointment.id)
+              : null;
+            const statusStyle = getStatusStyles(status);
 
             return (
-              <TouchableOpacity
+              <View
                 key={appointment?.id || index}
-                onPress={() => {
-                  setSelectedAppointment(item);
-                  setSelectedAppointmentId(
-                    appointment?.id ? String(appointment.id) : null,
-                  );
-                  setShowDetailsModal(true);
-                }}
-                className="bg-white p-2.5 rounded-xl mb-2 shadow-sm border border-slate-100 flex-row items-center justify-between"
+                className="bg-white p-5 rounded-[28px] shadow-sm elevation-3 mb-4 border border-slate-50"
               >
-                <View className="flex-row items-center flex-1 pr-2">
-                  <View className="w-8 h-8 rounded-full bg-sky-50 items-center justify-center mr-2.5">
-                    <Icon name="doctor" size={16} color="#0ea5e9" />
+                {/* Top Row: Formatted Date & Status */}
+                <View className="flex-row justify-between items-start mb-4">
+                  <View className="flex-row items-center bg-sky-50 px-3 py-1.5 rounded-xl">
+                    <Icon name="calendar-month" size={16} color="#0ea5e9" />
+                    <Text className="text-sm font-bold text-sky-600 ml-2">
+                      {formatAppointmentDate(appointment?.appointment_date)}
+                    </Text>
                   </View>
 
-                  <View className="flex-1">
-                    <Text
-                      className="text-sm font-bold text-slate-800"
-                      numberOfLines={1}
-                    >
-                      Dr. {dentist?.first_name} {dentist?.last_name || ''}
-                    </Text>
-                    <Text className="text-[10px] text-slate-500 mb-1">
-                      {dentist?.specialty || 'General Dentistry'}
-                    </Text>
-                    <View className="flex-row items-center bg-slate-50 self-start px-1.5 py-0.5 rounded border border-slate-100">
-                      <Icon
-                        name="calendar-clock-outline"
-                        size={10}
-                        color="#0ea5e9"
-                      />
-                      <Text className="text-[9px] text-slate-600 font-bold ml-1">
-                        {appointment?.appointment_date || 'Time TBD'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View className="items-end">
+                  {/* Status Badge */}
                   <View
-                    className={`px-1.5 py-0.5 rounded border ${getStatusColor(status)}`}
+                    className={`px-2.5 py-1 rounded-lg border ${statusStyle.bg}`}
                   >
-                    <Text className="text-[8px] uppercase font-extrabold">
+                    <Text
+                      className={`text-[10px] uppercase font-extrabold tracking-wider ${statusStyle.text}`}
+                    >
                       {status}
                     </Text>
                   </View>
-                  <Icon
-                    name="chevron-right"
-                    size={14}
-                    color="#94a3b8"
-                    style={{ marginTop: 8 }}
-                  />
                 </View>
-              </TouchableOpacity>
+
+                {/* Middle Row: Details (Time replaced Location) */}
+                <View className="mb-5">
+                  <Text className="text-lg text-slate-900 font-bold mb-1">
+                    {appointment.service_name || 'Dental Appointment'}
+                  </Text>
+                  <View className="flex-row items-center mt-1">
+                    <Icon name="doctor" size={16} color="#64748b" />
+                    <Text className="text-sm text-slate-500 ml-2 font-medium">
+                      Dr. {dentist?.first_name} {dentist?.last_name || ''}
+                    </Text>
+                  </View>
+
+                  {/* Time replaces the generic Location */}
+                  <View className="flex-row items-center mt-1.5">
+                    <Icon name="clock-outline" size={16} color="#64748b" />
+                    <Text className="text-sm text-slate-500 ml-2 font-medium">
+                      {formatAppointmentTime(
+                        appointment?.appointment_date,
+                        appointment?.time,
+                      )}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Bottom Row: Actions */}
+                <View className="flex-row gap-3">
+                  <TouchableOpacity
+                    className="flex-1 bg-slate-100 py-3.5 rounded-2xl items-center"
+                    activeOpacity={0.7}
+                    onPress={() => handleOpenEdit(item, appointmentId)}
+                  >
+                    <Text className="text-slate-700 text-sm font-bold">
+                      Reschedule
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="flex-1 bg-sky-50 py-3.5 rounded-2xl items-center"
+                    activeOpacity={0.7}
+                    onPress={() => handleOpenDetails(item, appointmentId)}
+                  >
+                    <Text className="text-sky-600 text-sm font-bold">
+                      View Details
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             );
           })
         )}
       </ScrollView>
 
-      {/* Modals remain exactly the same */}
+      {/* Modals */}
       <BookAppointmentModal
         visible={showBookingModal}
         onClose={() => setShowBookingModal(false)}
@@ -245,10 +331,29 @@ export default function AppointmentsScreen() {
         onClose={() => setShowDetailsModal(false)}
         onEdit={() => {
           setShowDetailsModal(false);
-          setShowEditModal(true);
+          setTimeout(() => setShowEditModal(true), 300);
         }}
-        onDelete={() => {
-          /* ... existing delete logic ... */
+        onDelete={async () => {
+          const delete_status = await DeleteAppointmentAPI(
+            selectedAppointmentId,
+          );
+          console.log(delete_status)
+          if (delete_status.status === 'success') {
+            showInfo({
+              title: 'Appointment Cancelled',
+              message: 'Your appointment has been cancelled successfully.',
+              type: 'info',
+              position: 'top',
+              visibilityTime: 3000,
+            });
+            setShowDetailsModal(false);
+            loadAppointments();
+          } else {
+            console.error(
+              'Failed to delete appointment:',
+              delete_status.message,
+            );
+          }
         }}
       />
       <EditAppointmentModal

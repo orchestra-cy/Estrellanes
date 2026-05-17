@@ -5,11 +5,10 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import type { ReminderInfoParsed } from '../../../types/screen.appointment.types';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 //types
 import {
   AppointmentDataItem,
@@ -71,7 +70,7 @@ export default function AppointmentDetailsModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 bg-slate-900/60 justify-end">
+      <View className="flex-1 justify-end">
         <SafeAreaView className="bg-white rounded-t-[32px] max-h-[90%] shadow-2xl">
           {/* Drag Handle Indicator */}
           <View className="items-center pt-3 pb-1">

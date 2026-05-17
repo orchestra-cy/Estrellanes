@@ -1,29 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { UserInfo } from '../../types/api.user.types';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   TextInput,
-  DeviceEventEmitter,
 } from 'react-native';
 
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { authLogout } from '../../app/action';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { GetUserInfo, ChangePassword } from '../../app/api/user';
+import { ChangePassword } from '../../app/api/user';
 import { Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import DentistSettingsScreen from '../dentist/DentistSettingsScreen';
 import { ChangePassDOT } from '../../types/api.user.types';
+import { AuthUser } from '../../types/reducer.auth.types';
+// alert
+import { showInfo } from '../../components/alert_message';
+
+
+interface RootState {
+  auth?: {
+    userData?: AuthUser | null;
+    isLoading?: boolean;
+  };
+}
 
 export default function ProfileScreen() {
   const dispatch = useDispatch();
+  const auth = useSelector((state: RootState) => state.auth || {});
+  const user: AuthUser = auth?.userData;
+  console.log('User Roles:', user);
+  const role = JSON.parse(user?.roles[0]);
+  console.log(role[0])
+  const isDentist = role[0] === 'ROLE_DENTIST';
+  console.log(isDentist)
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-  const [userInfo, setUserInfo] = useState<UserInfo>();
-  const [loading, setLoading] = useState<boolean>(true);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -31,22 +45,7 @@ export default function ProfileScreen() {
     confirmPassword: '',
   });
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const r: UserInfo = await GetUserInfo();
-        console.log(r);
-        setUserInfo(r);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  const getRoleDisplay = (roles: string[] | undefined) => {
+  const getRoleDisplay = (roles: string[] | string | undefined | null) => {
     if (!roles || roles.length === 0) return 'User';
     const roleString = Array.isArray(roles) ? roles[0] : roles;
     if (typeof roleString === 'string' && roleString.includes('ADMIN'))
@@ -56,7 +55,13 @@ export default function ProfileScreen() {
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match.');
+      showInfo({
+        title: 'Password Mismatch',
+        message: 'The new passwords do not match.',
+        type: 'error',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -75,12 +80,30 @@ export default function ProfileScreen() {
           newPassword: '',
           confirmPassword: '',
         });
-        Alert.alert('Success', 'Your password was successfully changed.');
+        showInfo({
+          title: 'Successfully Changed Password',
+          message: 'Your password was successfully changed.', 
+          type: 'success',
+          position: 'top',
+          visibilityTime: 3000,
+        });
       } else {
-        Alert.alert('Error', result.message || 'Make sure passwords match!');
+        showInfo({
+          title: 'Error Changing Password',
+          message: result.message,
+          type: 'error',
+          position: 'top',
+          visibilityTime: 3000,
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred.' + error);
+      showInfo({
+        title: 'Error Changing Password',
+        message: "Error " + error || 'An unexpected error occurred.',
+        type: 'error',
+        position: 'top',
+        visibilityTime: 3000,
+      });
     }
   };
 
@@ -88,7 +111,7 @@ export default function ProfileScreen() {
     dispatch(authLogout());
   };
 
-  if (loading) {
+  if (auth?.isLoading && !user) {
     return (
       <View className="flex-1 justify-center items-center bg-slate-50 p-5">
         <ActivityIndicator size="large" color="#3B82F6" />
@@ -124,16 +147,16 @@ export default function ProfileScreen() {
 
             <View>
               <Text className="text-2xl font-bold text-slate-900">
-                {userInfo?.user?.firstName} {userInfo?.user?.lastName}
+                {user?.firstName} {user?.lastName}
               </Text>
               <View className="flex-row items-center mt-1">
                 <View className="px-2 py-0.5 bg-blue-50 border border-blue-100 rounded">
                   <Text className="text-blue-700 text-xs font-bold uppercase">
-                    {getRoleDisplay(userInfo?.user?.roles)}
+                    {getRoleDisplay(user?.roles)}
                   </Text>
                 </View>
                 <Text className="text-slate-400 text-sm ml-2">
-                  #{userInfo?.user?.username}
+                  #{user?.username}
                 </Text>
               </View>
             </View>
@@ -156,7 +179,7 @@ export default function ProfileScreen() {
                   First Name
                 </Text>
                 <Text className="text-slate-800 font-medium">
-                  {userInfo?.user?.firstName}
+                  {user?.firstName}
                 </Text>
               </View>
               <View className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -164,7 +187,7 @@ export default function ProfileScreen() {
                   Last Name
                 </Text>
                 <Text className="text-slate-800 font-medium">
-                  {userInfo?.user?.lastName}
+                  {user?.lastName}
                 </Text>
               </View>
             </View>
@@ -176,7 +199,7 @@ export default function ProfileScreen() {
               <View className="flex-row items-center">
                 <Icon name="email-outline" size={16} color="#94A3B8" />
                 <Text className="text-slate-800 font-medium ml-2">
-                  {userInfo?.user?.email || 'N/A'}
+                  {user?.email || 'N/A'}
                 </Text>
               </View>
             </View>
@@ -278,6 +301,12 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        {isDentist && (
+          <View className="mt-6">
+            <DentistSettingsScreen embedded />
+          </View>
+        )}
+
         {/* Development Tools */}
         {__DEV__ && (
           <TouchableOpacity
@@ -285,9 +314,7 @@ export default function ProfileScreen() {
             onPress={handleLogout}
           >
             <Icon name="logout" size={20} color="#EF4444" />
-            <Text className="text-red-500 font-bold ml-2">
-              Developer Logout
-            </Text>
+            <Text className="text-red-500 font-bold ml-2">Logout</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

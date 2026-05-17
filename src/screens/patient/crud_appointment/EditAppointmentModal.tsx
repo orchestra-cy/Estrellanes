@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Switch,
   Platform,
+  Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -17,6 +18,7 @@ import {
   fetchEditableAppointment,
   updateAppointment,
 } from '../../../app/api/patient';
+import { showInfo } from '../../../components/alert_message';
 
 //types
 import {
@@ -144,6 +146,15 @@ export default function EditAppointmentModal({
         isFamilyBooking: isFamily,
         message: message.trim(),
       });
+
+      showInfo({
+        title: 'Appointment Updated',
+        message: 'Your appointment has been updated successfully.',
+        type: 'info',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+
       onSuccess();
       onClose();
     } catch (e) {
@@ -156,21 +167,21 @@ export default function EditAppointmentModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 bg-slate-900/60 justify-end">
-        <SafeAreaView className="bg-white rounded-t-[32px] max-h-[95%] shadow-2xl">
-          {/* Drag Handle Indicator */}
-          <View className="items-center pt-3 pb-1">
+      <View className="flex-1 justify-end relative">
+        <Pressable className="absolute inset-0" onPress={onClose} />
+
+        <SafeAreaView className="bg-white rounded-t-[36px] max-h-[95%]">
+          <View className="items-center pt-4 pb-2">
             <View className="w-12 h-1.5 bg-slate-200 rounded-full" />
           </View>
 
-          {/* Header */}
-          <View className="flex-row items-center justify-between px-6 pb-4 border-b border-slate-100">
-            <Text className="text-xl font-extrabold text-slate-800 tracking-tight">
+          <View className="flex-row items-center justify-between px-6 pb-4 border-b border-slate-50">
+            <Text className="text-2xl font-black text-slate-800 tracking-tight">
               Reschedule Visit
             </Text>
             <TouchableOpacity
               onPress={onClose}
-              className="w-8 h-8 bg-slate-100 rounded-full items-center justify-center"
+              className="w-9 h-9 bg-slate-50 rounded-full items-center justify-center border border-slate-100"
               activeOpacity={0.7}
             >
               <Icon name="close" size={20} color="#64748b" />
@@ -189,69 +200,95 @@ export default function EditAppointmentModal({
               contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
               showsVerticalScrollIndicator={false}
             >
-              <View className="space-y-7">
-                {/* Dentist Info Card */}
-                <View className="bg-slate-50 p-4 rounded-2xl flex-row items-center border border-slate-100">
-                  <View className="w-12 h-12 bg-sky-100 rounded-full items-center justify-center mr-4">
-                    <Icon name="doctor" size={24} color="#0ea5e9" />
+              <View className="space-y-6">
+                <View className="bg-white p-4 rounded-[24px] flex-row items-center border border-slate-100">
+                  <View className="w-14 h-14 bg-sky-50 rounded-full items-center justify-center mr-4 border border-sky-100">
+                    <Icon name="doctor" size={28} color="#0ea5e9" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
-                      Dentist
+                    <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                      Attending Dentist
                     </Text>
-                    <Text className="text-base font-bold text-slate-800">
+                    <Text className="text-lg font-bold text-slate-800">
                       Dr. {appointmentData?.dentist?.first_name}{' '}
                       {appointmentData?.dentist?.last_name}
                     </Text>
                     <Text className="text-sm font-medium text-slate-500">
-                      {appointmentData?.dentist?.specialty || 'General Dentistry'}
+                      {appointmentData?.dentist?.specialty ||
+                        'General Dentistry'}
                     </Text>
                   </View>
                 </View>
 
-                {/* Toggles Group */}
-                <View className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-4 my-2">
+                <View className="bg-white border border-slate-100 rounded-[24px] p-5 space-y-4">
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-sm font-bold text-slate-700">
-                      Emergency Visit
-                    </Text>
+                    <View className="flex-row items-center">
+                      <View className="w-8 h-8 bg-rose-50 rounded-full items-center justify-center mr-3">
+                        <Icon
+                          name="alert-plus-outline"
+                          size={16}
+                          color="#f43f5e"
+                        />
+                      </View>
+                      <Text className="text-sm font-bold text-slate-700">
+                        Emergency Visit
+                      </Text>
+                    </View>
                     <Switch
                       value={isEmergency}
                       onValueChange={setIsEmergency}
-                      trackColor={{ true: '#0ea5e9', false: '#cbd5e1' }}
+                      trackColor={{ true: '#0ea5e9', false: '#f1f5f9' }}
+                      thumbColor={
+                        Platform.OS === 'android' ? '#fff' : undefined
+                      }
                     />
                   </View>
-                  <View className="h-[1px] w-full bg-slate-100" />
+
+                  <View className="h-[1px] w-full bg-slate-50" />
+
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-sm font-bold text-slate-700">
-                      Family Visit
-                    </Text>
+                    <View className="flex-row items-center">
+                      <View className="w-8 h-8 bg-indigo-50 rounded-full items-center justify-center mr-3">
+                        <Icon
+                          name="account-group-outline"
+                          size={16}
+                          color="#6366f1"
+                        />
+                      </View>
+                      <Text className="text-sm font-bold text-slate-700">
+                        Family Visit
+                      </Text>
+                    </View>
                     <Switch
                       value={isFamily}
                       onValueChange={setIsFamily}
-                      trackColor={{ true: '#0ea5e9', false: '#cbd5e1' }}
+                      trackColor={{ true: '#0ea5e9', false: '#f1f5f9' }}
+                      thumbColor={
+                        Platform.OS === 'android' ? '#fff' : undefined
+                      }
                     />
                   </View>
                 </View>
 
-                {/* Available Slots Section */}
-                <View>
-                  <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">
-                    Available Slots
+                <View className="pt-2">
+                  <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">
+                    Available Time Slots
                   </Text>
                   {Object.keys(scheduleMap).length === 0 ? (
-                    <Text className="text-sm text-slate-500 mt-2 ml-1 italic">
+                    <Text className="text-sm text-slate-500 mt-2 ml-1 italic font-medium bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       No schedules available.
                     </Text>
                   ) : (
                     Object.entries(scheduleMap).map(([dayKey, slots]) => (
                       <View key={dayKey} className="mt-3">
-                        <Text className="text-xs text-slate-500 uppercase font-bold ml-1">
+                        <Text className="text-xs text-slate-800 uppercase font-bold ml-1 mb-2">
                           {dayKey}
                         </Text>
-                        <View className="flex-row flex-wrap gap-2 mt-2">
+                        <View className="flex-row flex-wrap gap-2">
                           {slots.map((slot, index) => {
-                            const slotId = String(slot.id ?? `${dayKey}-${index}`);
+                            const slotId = String(
+                              slot.id ?? `${dayKey}-${index}`,
+                            );
                             const active = selectedSchedule === slotId;
                             const isOriginal = originalSchedule === slotId;
                             return (
@@ -264,12 +301,12 @@ export default function EditAppointmentModal({
                                   setError('');
                                 }}
                                 activeOpacity={0.7}
-                                className={`px-4 py-2.5 rounded-xl border ${
+                                className={`px-4 py-3 rounded-2xl border ${
                                   active
-                                    ? 'bg-sky-500 border-sky-500 shadow-sm'
+                                    ? 'bg-sky-500 border-sky-500'
                                     : isOriginal
-                                    ? 'bg-sky-50 border-sky-200'
-                                    : 'bg-white border-slate-200'
+                                      ? 'bg-sky-50 border-sky-100'
+                                      : 'bg-white border-slate-200'
                                 }`}
                               >
                                 <Text
@@ -277,11 +314,11 @@ export default function EditAppointmentModal({
                                     active
                                       ? 'text-white'
                                       : isOriginal
-                                      ? 'text-sky-700'
-                                      : 'text-slate-600'
+                                        ? 'text-sky-700'
+                                        : 'text-slate-600'
                                   }`}
                                 >
-                                  {slot.time_slot || 'TBD'}
+                                  {String(slot.time_slot || 'TBD')}
                                 </Text>
                               </TouchableOpacity>
                             );
@@ -292,50 +329,69 @@ export default function EditAppointmentModal({
                   )}
                 </View>
 
-                {/* Date Selection (Only shows if a schedule is selected) */}
                 {selectedSchedule ? (
-                  <View>
-                    <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">
+                  <View className="pt-2">
+                    <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">
                       Select Date
                     </Text>
                     <TouchableOpacity
                       onPress={() => setShowDatePicker(true)}
-                      className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 flex-row items-center justify-between"
+                      className="bg-white border border-slate-200 rounded-[20px] px-5 py-4 flex-row items-center justify-between"
                       activeOpacity={0.7}
                     >
-                      <Text
-                        className={`text-base font-medium ${
-                          date ? 'text-slate-900' : 'text-slate-400'
-                        }`}
-                      >
-                        {date ? date.toLocaleDateString() : 'Pick a date...'}
-                      </Text>
-                      <Icon name="calendar" size={20} color="#94a3b8" />
+                      <View className="flex-row items-center">
+                        <View className="mr-3">
+                          <Icon
+                            name="calendar-month-outline"
+                            size={20}
+                            color={date ? '#0ea5e9' : '#94a3b8'}
+                          />
+                        </View>
+                        <Text
+                          className={`text-base font-semibold ${
+                            date ? 'text-slate-900' : 'text-slate-400'
+                          }`}
+                        >
+                          {date
+                            ? date.toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : 'Pick an available date...'}
+                        </Text>
+                      </View>
+                      <Icon name="chevron-down" size={20} color="#94a3b8" />
                     </TouchableOpacity>
                   </View>
                 ) : null}
 
-                {/* Message Input */}
-                <View>
-                  <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">
-                    Message (Optional)
+                <View className="pt-2">
+                  <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">
+                    Reason / Notes (Optional)
                   </Text>
                   <TextInput
-                    className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-base text-slate-900 font-medium"
-                    placeholder="Add any additional notes..."
+                    className="bg-white border border-slate-200 rounded-[20px] px-5 py-4 text-base text-slate-900 font-medium min-h-[110px]"
+                    placeholder="Add any specific concerns..."
                     placeholderTextColor="#94a3b8"
                     value={message}
                     onChangeText={setMessage}
                     multiline
                     textAlignVertical="top"
-                    style={{ minHeight: 100 }}
                   />
                 </View>
 
-                {/* Error Display */}
                 {error ? (
-                  <View className="bg-rose-50 p-3 rounded-xl border border-rose-100">
-                    <Text className="text-rose-600 text-sm font-semibold text-center">
+                  <View className="bg-rose-50 p-4 rounded-2xl border border-rose-100 flex-row items-center">
+                    <View className="mr-2">
+                      <Icon
+                        name="alert-circle-outline"
+                        size={20}
+                        color="#e11d48"
+                      />
+                    </View>
+                    <Text className="text-rose-600 text-sm font-bold flex-1">
                       {error}
                     </Text>
                   </View>
@@ -353,24 +409,23 @@ export default function EditAppointmentModal({
             </ScrollView>
           )}
 
-          {/* Bottom Action Buttons */}
           {!loading && (
-            <View className="flex-row gap-3 px-6 py-5 border-t border-slate-100 bg-white">
+            <View className="flex-row gap-3 px-6 py-5 border-t border-slate-50 bg-white rounded-b-[36px]">
               <TouchableOpacity
                 onPress={onClose}
-                className="flex-1 bg-white border-2 border-slate-200 rounded-2xl py-4 items-center justify-center"
+                className="flex-1 bg-white border-2 border-slate-100 rounded-[20px] py-4 items-center justify-center"
                 activeOpacity={0.7}
               >
-                <Text className="text-slate-600 font-bold tracking-wide">
+                <Text className="text-slate-500 font-bold tracking-wide text-sm">
                   Cancel
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSave}
-                className="flex-1 bg-sky-500 rounded-2xl py-4 items-center justify-center shadow-sm shadow-sky-500/30"
+                className="flex-[1.5] bg-sky-500 rounded-[20px] py-4 items-center justify-center"
                 activeOpacity={0.8}
               >
-                <Text className="text-white font-bold tracking-wide text-base">
+                <Text className="text-white font-bold tracking-wide text-sm">
                   Save Changes
                 </Text>
               </TouchableOpacity>

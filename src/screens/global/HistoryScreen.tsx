@@ -5,11 +5,11 @@ import {
   Text,
   FlatList,
   ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { fetchHistory } from '../../app/api/appointment';
 import { GetUserInfo } from '../../app/api/user';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 //types
 import type { HistoryDOT } from '../../types/history.types';
@@ -100,6 +100,7 @@ export default function HistoryScreen() {
         };
         const response = (await fetchHistory(payload)) as HistoryResponse;
         if (isMounted) {
+          console.log("history is:", response?.data);
           setHistory(response?.data || []);
         }
       } catch (e) {

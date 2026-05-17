@@ -26,17 +26,30 @@ import { showSuccess } from '../../components/alert_message';
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Added state for password toggle
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
+  const [loading, setLoading] = useState<boolean>(false);
+  
   const handleLogin = () => {
+    setLoading(true);
     console.log('Credentials', `u: ${username} p: ${password}`);
-    const payload: LoginDOT = { username, password };
-    dispatch(authLogin(payload));
+    
+    // Pass an onComplete callback so the Saga can notify this component when done
+    const payload: LoginDOT = { 
+      username:username.trim(), 
+      password:password.trim(),
+      onComplete: () => setLoading(false) 
+    };
+    
+    const response = dispatch(authLogin(payload));
+    console.log(response)
   };
 
   const handleLoginGoogle = async () => {
+    setLoading(true);
     console.log('Login function==================');
     try {
       const response = await sign_in_with_google();
@@ -44,6 +57,7 @@ export default function Login() {
         const idToken = response?.userInfo?.idToken;
         if (!idToken) {
           console.log('No token received from Google Sign-In');
+          setLoading(false);
           return;
         }
 
@@ -51,6 +65,8 @@ export default function Login() {
         const data = await apiResponse.json();
         
         if (data?.token) {
+          setLoading(false);
+          
           dispatch(authLoginGoogle(data.token));
           showSuccess({
             title: 'Google Sign-In successful',
@@ -61,12 +77,15 @@ export default function Login() {
           });
         } else {
           console.log('No token returned by backend');
+          setLoading(false);
         }
       } else {
         console.log('Sign-in cancelled by user.');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Sign-in crashed:', error);
+      setLoading(false);
     }
   };
 
@@ -76,7 +95,6 @@ export default function Login() {
       className="flex-1"
       resizeMode="cover"
     >
-      {/* Darkened overlay to ensure the white card pops */}
       <View className="flex-1 bg-slate-900/60 justify-center">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -87,9 +105,7 @@ export default function Login() {
             showsVerticalScrollIndicator={false}
             className="px-5"
           >
-            {/* Main Floating Card */}
             <View className="bg-white rounded-[32px] px-6 py-8 shadow-2xl elevation-5 my-10 mx-1">
-              {/* Logo & Enhanced Welcome Header */}
               <View className="items-center mb-8">
                 <Image
                   source={IMG.LOGO}
@@ -105,9 +121,7 @@ export default function Login() {
                 </Text>
               </View>
 
-              {/* Form Container */}
               <View className="space-y-5">
-                {/* Username Input */}
                 <View>
                   <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
                     Username
@@ -122,22 +136,33 @@ export default function Login() {
                   />
                 </View>
 
-                {/* Password Input */}
+                {/* Password Input with Toggle */}
                 <View>
                   <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
                     Password
                   </Text>
-                  <TextInput
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-base text-slate-900 font-medium"
-                    placeholder="Enter your password"
-                    placeholderTextColor="#94a3b8"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                  />
+                  <View className="relative justify-center">
+                    <TextInput
+                      // Added pr-16 to make room for the absolute button so text doesn't overlap
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-4 pr-16 py-4 text-base text-slate-900 font-medium"
+                      placeholder="Enter your password"
+                      placeholderTextColor="#94a3b8"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity
+                      className="absolute right-4 py-2 px-2"
+                      onPress={() => setShowPassword(!showPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <Text className="text-slate-400 font-bold text-xs tracking-widest">
+                        {showPassword ? 'HIDE' : 'SHOW'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
-                {/* Forgot Password Link */}
                 <TouchableOpacity className="self-end mt-2">
                   <Text className="text-sky-500 text-sm font-semibold">
                     Forgot Password?
@@ -145,18 +170,17 @@ export default function Login() {
                 </TouchableOpacity>
               </View>
 
-              {/* Primary Login Button */}
               <TouchableOpacity
                 className="w-full bg-sky-500 py-4 rounded-2xl items-center mt-6 shadow-md shadow-sky-500/30"
                 onPress={handleLogin}
                 activeOpacity={0.8}
+                disabled={loading}
               >
                 <Text className="text-white text-lg font-bold tracking-wide">
-                  Sign In
+                  {loading ? 'Signing in...' : 'Sign In'}
                 </Text>
               </TouchableOpacity>
 
-              {/* Divider */}
               <View className="flex-row items-center my-6">
                 <View className="flex-1 h-[1px] bg-slate-200" />
                 <Text className="text-slate-400 font-medium px-4 text-xs uppercase tracking-wider">
@@ -165,11 +189,11 @@ export default function Login() {
                 <View className="flex-1 h-[1px] bg-slate-200" />
               </View>
 
-              {/* Google Button */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 className="w-full bg-white border border-slate-200 rounded-2xl py-4 flex-row items-center justify-center shadow-sm"
                 onPress={handleLoginGoogle}
+                disabled={loading}
               >
                 <Text className="text-[#4285F4] text-xl font-extrabold mr-3">
                   G
@@ -179,7 +203,6 @@ export default function Login() {
                 </Text>
               </TouchableOpacity>
 
-              {/* Register Link */}
               <View className="flex-row items-center justify-center mt-8">
                 <Text className="text-slate-500 text-sm font-medium">
                   New to the clinic?{' '}

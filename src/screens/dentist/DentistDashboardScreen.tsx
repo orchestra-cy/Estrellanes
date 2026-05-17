@@ -1,47 +1,91 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { ROUTES } from '../../utils';
+
 import { fetchDentistAppointments } from '../../app/api/dentist';
 import type { DentistAppointmentItem } from '../../types/dentist.types';
+import type { AuthUser } from '../../types/reducer.auth.types';
 
-// websocket wsManager
+// websocket manager & types
 import { wsManager } from '../../utils/WebsocketManager';
-
-// types
 import { WebSocketMessage } from '../../types/websockets.types';
+
+interface RootState {
+  auth?: {
+    userData?: AuthUser | null;
+  };
+}
 
 const formatName = (first?: string, last?: string) => {
   const full = `${first || ''} ${last || ''}`.trim();
   return full || 'Unknown Patient';
 };
 
-const getStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
+const getStatusStyles = (status: string) => {
+  switch (status?.toLowerCase()) {
     case 'approved':
-      return 'bg-emerald-50 border-emerald-100 text-emerald-700';
+      return {
+        bg: 'bg-emerald-50 border-emerald-100',
+        text: 'text-emerald-700',
+      };
     case 'rejected':
-      return 'bg-rose-50 border-rose-100 text-rose-700';
+    case 'cancelled':
+      return { bg: 'bg-rose-50 border-rose-100', text: 'text-rose-700' };
     default:
-      return 'bg-amber-50 border-amber-100 text-amber-700';
+      return { bg: 'bg-amber-50 border-amber-100', text: 'text-amber-700' };
   }
 };
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+};
+
 export default function DentistDashboardScreen() {
-  const [appointments, setAppointments] = useState<DentistAppointmentItem[]>([]);
+  const navigation = useNavigation();
+  const user = useSelector((state: RootState) => state.auth?.userData || null);
+  const displayName = user?.firstName || user?.username || 'Doctor';
+  const [appointments, setAppointments] = useState<DentistAppointmentItem[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // ----- Realtime update guards -----
+  const isFetchingRef = useRef(false); // prevents overlapping API calls
+  const needsRefreshRef = useRef(false); // true if WS message arrived during a fetch
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null); // debounce timer
+
   const load = useCallback(async (isBackgroundRefresh = false) => {
-    if (!isBackgroundRefresh) setLoading(true); 
+    // Avoid duplicate in‑flight requests
+    if (isFetchingRef.current) {
+      console.log('Skipping load: already fetching');
+      return;
+    }
+
+    isFetchingRef.current = true;
+
+    if (!isBackgroundRefresh) {
+      setLoading(true);
+    }
+    setError('');
+
     try {
-      const data = await fetchDentistAppointments();
+      console.log('Fetching latest appointments...');
+      const data = await fetchDentistAppointments({ forceRefresh: true });
+
       if (data?.status === 'ok' && Array.isArray(data.appointments)) {
         const formatted = data.appointments.map((item: any) => {
           const appt = item.appointment || {};
@@ -73,76 +117,120 @@ export default function DentistDashboardScreen() {
       } else {
         setAppointments([]);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error('Dashboard load failed:', err);
       setError('Failed to load dentist dashboard.');
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
+
+      // If a refresh was requested while we were busy, run it now
+      if (needsRefreshRef.current) {
+        needsRefreshRef.current = false;
+        // Tiny delay to avoid any recursion spikes
+        setTimeout(() => load(true), 100);
+      }
     }
   }, []);
 
+  // ----- WebSocket listener with debounce + queue -----
   useEffect(() => {
     load();
 
     const unsubscribe = wsManager.on(
       'notification',
       (payload: WebSocketMessage) => {
-        console.log("WebSocket Received:", payload);
-        if (payload.type === 'new_appointment' || payload.type === 'appointment_updated_by_patient') {
-          load(true); 
+        console.log('WebSocket Received:', payload);
+
+        const shouldRefresh =
+          payload.type === 'new_appointment' ||
+          payload.type === 'appointment_updated_by_patient' ||
+          payload.type === 'appointment_update' ||
+          payload.type === 'appointment_cancelled';
+
+        if (!shouldRefresh) return;
+
+        console.log('Realtime refresh triggered:', payload.type);
+
+        if (isFetchingRef.current) {
+          needsRefreshRef.current = true;
+        } else {
+          if (refreshTimeoutRef.current) {
+            clearTimeout(refreshTimeoutRef.current);
+          }
+          refreshTimeoutRef.current = setTimeout(() => {
+            load(true);
+          }, 300);
         }
       },
     );
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
   }, [load]);
 
-  // 3. Reactively calculate stats based on the latest appointments array
-  const stats = useMemo(() => {
-    const total = appointments.length;
-    const uniquePatientsCount = new Set(appointments.map(a => a.patient_name)).size;
-    const emergenciesCount = appointments.filter(a => a.emergency).length;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todaysCount = appointments.filter(a => a.date?.startsWith(todayStr)).length;
+  const total = appointments.length;
+  const uniquePatientsCount = new Set(appointments.map(a => a.patient_name))
+    .size;
+  const emergenciesCount = appointments.filter(a => a.emergency).length;
+  const getLocalTodayString = () => {
+    const today = new Date();
 
-    return {
-      appointmentCount: total,
-      uniquePatients: uniquePatientsCount,
-      emergencies: emergenciesCount,
-      todayCount: todaysCount,
-    };
-  }, [appointments]);
+    return today.toLocaleDateString('en-CA'); 
+  };
+  
+  const todayStr = getLocalTodayString();
+  console.log(todayStr)
+  const todaysCount = appointments.filter(
+    appointment => appointment.date.trim() === todayStr,
+  ).length;
+  console.log(appointments);
+  console.log(todaysCount);
 
+  const stats = {
+    appointmentCount: total,
+    uniquePatients: uniquePatientsCount,
+    emergencies: emergenciesCount,
+    todayCount: todaysCount,
+  };
 
   if (loading && appointments.length === 0) {
     return (
-      <View className="flex-1 justify-center items-center bg-slate-50 p-5">
+      <SafeAreaView className="flex-1 justify-center items-center bg-slate-50">
         <ActivityIndicator size="large" color="#0ea5e9" />
-        <Text className="mt-4 text-slate-500 font-medium tracking-wide">
-          Loading dashboard...
+        <Text className="mt-4 text-slate-500 font-bold tracking-wide">
+          Syncing Schedule...
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View className="flex-1 justify-center items-center bg-slate-50 p-5">
-        <View className="bg-rose-50 p-5 rounded-full mb-5">
-          <Icon name="alert-circle-outline" size={36} color="#e11d48" />
+      <SafeAreaView className="flex-1 justify-center items-center bg-slate-50 p-5">
+        <View className="bg-rose-50 p-6 rounded-[32px] mb-5 border border-rose-100">
+          <Icon name="alert-circle-outline" size={48} color="#e11d48" />
         </View>
-        <Text className="text-xl font-bold text-slate-800 mb-2">
+        <Text className="text-2xl font-black text-slate-800 mb-2">
           Unable to load dashboard
         </Text>
-        <Text className="text-slate-500 text-center mb-8 px-4">{error}</Text>
+        <Text className="text-slate-500 font-medium text-center mb-8 px-4 leading-6">
+          {error}
+        </Text>
         <TouchableOpacity
-          className="bg-sky-500 py-3.5 px-8 rounded-xl shadow-sm shadow-sky-500/30"
+          className="bg-sky-500 py-4 px-10 rounded-[20px] shadow-md shadow-sky-500/30"
           onPress={() => load()}
           activeOpacity={0.8}
         >
-          <Text className="text-white font-bold tracking-wide">Try Again</Text>
+          <Text className="text-white font-bold tracking-wide text-base">
+            Try Again
+          </Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -152,34 +240,45 @@ export default function DentistDashboardScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* Header */}
-        <View className="flex-row justify-between items-end px-6 pt-6 pb-5">
-          <View>
-            <Text className="text-3xl font-extrabold text-slate-800 tracking-tight">
-              Dashboard
-            </Text>
-            <Text className="text-sm font-medium text-slate-500 mt-1">
-              Welcome back, Doctor.
-            </Text>
+        {/* Exciting / Dynamic Header */}
+        <View className="px-6 pt-8 pb-6">
+          <View className="flex-row justify-between items-start mb-2">
+            <View className="flex-1 pr-4">
+              <Text className="text-sm font-bold text-sky-500 uppercase tracking-widest mb-1">
+                {getGreeting()}
+              </Text>
+              <Text className="text-3xl font-black text-slate-900 tracking-tight">
+                Welcome, Dr. {displayName}.
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => load()}
+              activeOpacity={0.7}
+              className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-sm shadow-slate-200 border border-slate-100"
+            >
+              <Icon name="refresh" size={22} color="#0ea5e9" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={() => load()}
-            activeOpacity={0.7}
-            className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm border border-slate-100"
-          >
-            <Icon name="refresh" size={20} color="#0ea5e9" />
-          </TouchableOpacity>
+
+          <Text className="text-base font-semibold text-slate-500 mt-1">
+            {stats.todayCount > 0
+              ? `Ready to create some smiles? You have ${stats.todayCount} ${stats.todayCount === 1 ? 'patient' : 'patients'} scheduled for today.`
+              : 'Your schedule is clear for today. Great time to catch up on records!'}
+          </Text>
         </View>
 
         {/* Stats Grid */}
-        <View className="px-6 mb-8">
-          <View className="flex-row flex-wrap justify-between">
+        <View className="px-5 mb-8">
+          <View className="flex-row flex-wrap justify-between gap-y-4">
             {/* Total Appointments */}
-            <View className="w-[48%] bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm mb-4">
-              <View className="w-10 h-10 rounded-full bg-sky-50 items-center justify-center mb-3">
-                <Icon name="calendar-multiple" size={20} color="#0ea5e9" />
+            <View className="w-[48%] bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm shadow-slate-100 relative overflow-hidden">
+              <View className="absolute -right-4 -top-4 opacity-5">
+                <Icon name="calendar-multiple" size={100} color="#0ea5e9" />
               </View>
-              <Text className="text-2xl font-extrabold text-slate-800">
+              <View className="w-12 h-12 rounded-full bg-sky-50 items-center justify-center mb-4 border border-sky-100">
+                <Icon name="calendar-multiple" size={24} color="#0ea5e9" />
+              </View>
+              <Text className="text-3xl font-black text-slate-800">
                 {stats.appointmentCount}
               </Text>
               <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
@@ -188,11 +287,14 @@ export default function DentistDashboardScreen() {
             </View>
 
             {/* Unique Patients */}
-            <View className="w-[48%] bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm mb-4">
-              <View className="w-10 h-10 rounded-full bg-indigo-50 items-center justify-center mb-3">
-                <Icon name="account-group-outline" size={20} color="#6366f1" />
+            <View className="w-[48%] bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm shadow-slate-100 relative overflow-hidden">
+              <View className="absolute -right-4 -top-4 opacity-5">
+                <Icon name="account-group" size={100} color="#6366f1" />
               </View>
-              <Text className="text-2xl font-extrabold text-slate-800">
+              <View className="w-12 h-12 rounded-full bg-indigo-50 items-center justify-center mb-4 border border-indigo-100">
+                <Icon name="account-group-outline" size={24} color="#6366f1" />
+              </View>
+              <Text className="text-3xl font-black text-slate-800">
                 {stats.uniquePatients}
               </Text>
               <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
@@ -201,11 +303,14 @@ export default function DentistDashboardScreen() {
             </View>
 
             {/* Scheduled Today */}
-            <View className="w-[48%] bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm">
-              <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mb-3">
-                <Icon name="calendar-today" size={20} color="#10b981" />
+            <View className="w-[48%] bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm shadow-slate-100 relative overflow-hidden">
+              <View className="absolute -right-4 -top-4 opacity-5">
+                <Icon name="calendar-star" size={100} color="#10b981" />
               </View>
-              <Text className="text-2xl font-extrabold text-slate-800">
+              <View className="w-12 h-12 rounded-full bg-emerald-50 items-center justify-center mb-4 border border-emerald-100">
+                <Icon name="calendar-today" size={24} color="#10b981" />
+              </View>
+              <Text className="text-3xl font-black text-slate-800">
                 {stats.todayCount}
               </Text>
               <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
@@ -214,11 +319,14 @@ export default function DentistDashboardScreen() {
             </View>
 
             {/* Emergencies */}
-            <View className="w-[48%] bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm">
-              <View className="w-10 h-10 rounded-full bg-rose-50 items-center justify-center mb-3">
-                <Icon name="alert-plus-outline" size={20} color="#e11d48" />
+            <View className="w-[48%] bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm shadow-slate-100 relative overflow-hidden">
+              <View className="absolute -right-4 -top-4 opacity-5">
+                <Icon name="alert-decagram" size={100} color="#e11d48" />
               </View>
-              <Text className="text-2xl font-extrabold text-slate-800">
+              <View className="w-12 h-12 rounded-full bg-rose-50 items-center justify-center mb-4 border border-rose-100">
+                <Icon name="alert-plus-outline" size={24} color="#e11d48" />
+              </View>
+              <Text className="text-3xl font-black text-slate-800">
                 {stats.emergencies}
               </Text>
               <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
@@ -229,73 +337,95 @@ export default function DentistDashboardScreen() {
         </View>
 
         {/* Latest Requests */}
-        <View className="px-6">
-          <Text className="text-lg font-bold text-slate-800 mb-4">
-            Latest Requests
-          </Text>
+        <View className="px-5">
+          <View className="flex-row justify-between items-center mb-5 ml-1">
+            <Text className="text-xl font-black text-slate-800">
+              Latest Requests
+            </Text>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() =>
+                navigation.navigate(ROUTES.DENTIST_APPOINTMENTS as never)
+              }
+              className="bg-sky-50 px-4 py-2 rounded-full border border-sky-100"
+            >
+              <Text className="text-xs font-bold text-sky-600 uppercase tracking-widest">
+                See All
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {appointments.length === 0 ? (
-            <View className="bg-white rounded-[24px] border-2 border-dashed border-slate-200 p-8 items-center mt-2">
-              <View className="w-16 h-16 rounded-full bg-slate-50 items-center justify-center mb-3">
-                <Icon name="calendar-blank-outline" size={32} color="#94a3b8" />
+            <View className="bg-white rounded-[28px] border-2 border-dashed border-slate-200 p-8 items-center mt-2">
+              <View className="w-16 h-16 rounded-full bg-slate-50 items-center justify-center mb-4 border border-slate-100">
+                <Icon name="calendar-check-outline" size={32} color="#94a3b8" />
               </View>
-              <Text className="text-base font-bold text-slate-800 mb-1">
+              <Text className="text-lg font-bold text-slate-800 mb-1">
                 All caught up
               </Text>
-              <Text className="text-sm text-slate-500 text-center">
+              <Text className="text-sm font-medium text-slate-500 text-center">
                 New booking requests will appear here.
               </Text>
             </View>
           ) : (
-            appointments.slice(0, 5).map(appt => (
-              <View
-                key={appt.id}
-                className="bg-white p-4 rounded-[20px] mb-3 shadow-sm border border-slate-100 flex-row items-center justify-between"
-              >
-                <View className="flex-1 pr-3">
-                  <View className="flex-row items-center mb-1">
-                    <Text
-                      className="text-base font-bold text-slate-800"
-                      numberOfLines={1}
+            appointments.slice(0, 5).map(appt => {
+              const statusStyle = getStatusStyles(appt.status);
+
+              return (
+                <View
+                  key={appt.id}
+                  className="bg-white p-5 rounded-[24px] mb-4 shadow-sm shadow-slate-100 border border-slate-100 flex-row items-center justify-between"
+                >
+                  <View className="flex-1 pr-3">
+                    <View className="flex-row items-center mb-1">
+                      <Text
+                        className="text-lg font-bold text-slate-900"
+                        numberOfLines={1}
+                      >
+                        {appt.patient_name}
+                      </Text>
+                      {appt.emergency && (
+                        <View className="ml-2 px-2 py-0.5 rounded-md border border-rose-100 bg-rose-50 flex-row items-center">
+                          <Icon
+                            name="alert-circle"
+                            size={10}
+                            color="#e11d48"
+                            className="mr-1"
+                          />
+                          <Text className="text-[9px] font-extrabold text-rose-600 uppercase tracking-widest">
+                            Urgent
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <Text className="text-sm font-medium text-slate-500 mb-3">
+                      {appt.service_name || 'General Checkup'}
+                    </Text>
+
+                    <View className="flex-row items-center bg-sky-50 self-start px-2.5 py-1.5 rounded-xl border border-sky-100">
+                      <Icon name="calendar-clock" size={14} color="#0ea5e9" />
+                      <Text className="text-[11px] text-sky-700 font-bold ml-1.5">
+                        {appt.date || 'TBD'} • {appt.time_slot || 'Time TBD'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="items-end justify-center">
+                    <View
+                      className={`px-3 py-1.5 rounded-xl border ${statusStyle.bg}`}
                     >
-                      {appt.patient_name}
-                    </Text>
-                    {appt.emergency && (
-                      <View className="ml-2 px-1.5 py-0.5 rounded border border-rose-100 bg-rose-50">
-                        <Text className="text-[9px] font-bold text-rose-600 uppercase tracking-widest">
-                          Urgent
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <Text className="text-xs font-medium text-slate-500 mb-2.5">
-                    {appt.service_name || 'General Checkup'}
-                  </Text>
-
-                  <View className="flex-row items-center bg-slate-50 self-start px-2 py-1 rounded-lg border border-slate-100">
-                    <Icon
-                      name="calendar-clock-outline"
-                      size={14}
-                      color="#0ea5e9"
-                    />
-                    <Text className="text-[11px] text-slate-600 font-bold ml-1.5">
-                      {appt.date || 'TBD'} • {appt.time_slot || 'Time TBD'}
-                    </Text>
+                      <Text
+                        className={`text-[10px] font-extrabold uppercase tracking-widest ${statusStyle.text}`}
+                      >
+                        {appt.status}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-
-                <View className="items-end">
-                  <View
-                    className={`px-2.5 py-1 rounded-md border ${getStatusColor(appt.status)}`}
-                  >
-                    <Text className="text-[10px] font-extrabold uppercase tracking-widest">
-                      {appt.status}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
       </ScrollView>

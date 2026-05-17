@@ -37,4 +37,5 @@ export interface UserLoginResult {
   token: string;
   error?: string
   data?: string | undefined
+  message?: string | undefined
 }

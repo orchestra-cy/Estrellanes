@@ -3,255 +3,199 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
-  SafeAreaView,
   StatusBar,
+  Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useSelector } from 'react-redux';
+import type { AuthUser } from '../../types/reducer.auth.types';
+
+//nav
+import { ROUTES } from '../../utils';
+import { useNavigation } from '@react-navigation/native';
+
+interface RootState {
+  auth?: {
+    userData?: AuthUser | null;
+  };
+}
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
+  const user = useSelector((state: RootState) => state.auth?.userData || null);
+  const displayName = user?.firstName || user?.username || 'there';
 
-  const quickLinks = [
-    { label: 'Book Visit', icon: 'calendar-check' },
-    { label: 'Find Clinic', icon: 'map-marker' },
-    { label: 'Shop Care', icon: 'basket' },
-    { label: 'Tele-Dental', icon: 'video' },
-    { label: 'Offers', icon: 'tag' },
+  const clinicServices = [
+    'Routine Checkup & Cleaning',
+    'Dental X-Ray',
+    'Braces Consultation',
+    'Teeth Whitening',
+    'Wisdom Tooth Extraction',
+    'Dental Implant Surgery',
+    'Deep Cleaning (Scaling)',
   ];
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 pt-2">
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      >
-        {/* GREETING SECTION */}
-        <View className="px-5 mt-4">
-          <Text className="text-sm text-slate-500 font-medium">
+      <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
+
+      {/* HEADER WITH NOTIFICATIONS */}
+      <View className="flex-row justify-between items-center px-6 mt-4">
+        <View>
+          <Text className="text-sm text-slate-500 font-medium tracking-wide">
             Good morning,
           </Text>
-          <Text className="text-2xl font-bold text-slate-900 mt-0.5">
-            Clint
+          <Text className="text-2xl font-extrabold text-slate-800 mt-0.5">
+            {displayName}
           </Text>
         </View>
 
-        {/* SEARCH BAR */}
-        <View className="flex-row items-center bg-white mx-5 mt-5 rounded-2xl px-4 h-14 shadow-sm elevation-2">
-          <Icon name="magnify" size={24} color="#64748B" />
-          <TextInput
-            className="flex-1 text-base text-slate-900 ml-3 mr-2"
-            placeholder="Search services, clinics, or products"
-            placeholderTextColor="#94A3B8"
-          />
-          <TouchableOpacity
-            className="w-10 h-10 rounded-xl bg-slate-100 justify-center items-center"
-            activeOpacity={0.7}
-          >
-            <Icon name="qrcode-scan" size={20} color="#007AFF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* QUICK LINKS GRID */}
-        <View className="flex-row justify-around px-4 mt-6">
-          {quickLinks.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              className="items-center"
-              activeOpacity={0.7}
-            >
-              <View className="w-14 h-14 rounded-full bg-white justify-center items-center shadow-sm elevation-2">
-                <Icon name={item.icon} size={24} color="#007AFF" />
-              </View>
-              <Text className="text-xs text-slate-600 mt-2 font-medium">
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* FEATURED SECTION */}
-        <View className="flex-row justify-between items-center px-5 mt-8 mb-4">
-          <Text className="text-lg font-bold text-slate-900">
-            Featured Services
-          </Text>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text className="text-sm text-blue-500 font-semibold">See All</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="ml-5"
-          contentContainerStyle={{ paddingRight: 20 }}
+        {/* Notification Bell */}
+        <TouchableOpacity
+          className="w-12 h-12 bg-white rounded-full justify-center items-center shadow-sm elevation-2 relative"
+          activeOpacity={0.7}
         >
-          {/* Card 1 */}
+          <Icon name="bell-outline" size={24} color="#64748b" />
+          <View className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 60, paddingTop: 20 }}
+      >
+        {/* HERO CTA: THE PRIMARY ACTION */}
+        <View className="px-5 mb-8">
           <TouchableOpacity
-            className="w-72 bg-white rounded-3xl mr-4 shadow-sm elevation-4"
             activeOpacity={0.9}
+            className="w-full bg-sky-500 rounded-[32px] p-6 shadow-lg shadow-sky-500/40 relative overflow-hidden"
+            onPress={() => navigation.navigate(ROUTES.APPOINTMENTS as never)}
           >
-            <View className="p-4">
-              <View className="h-32 rounded-2xl justify-center items-center bg-blue-50">
-                {/* Fallback to 'emoticon-outline' if 'tooth' is too new for your RN version */}
-                <Icon name="tooth" size={48} color="#007AFF" />
-              </View>
-            </View>
-            <View className="px-4 pb-4">
-              <Text className="text-lg font-bold text-slate-900 mb-1">
-                Whitening Special
-              </Text>
-              <Text className="text-sm text-slate-500 mb-3 leading-5">
-                Professional teeth whitening at 30% off. Includes take-home kit.
-              </Text>
-              <View className="flex-row justify-between items-center">
-                <Text className="text-sm text-blue-500 font-semibold">
-                  Limited time offer
-                </Text>
-                <Icon name="arrow-right" size={18} color="#007AFF" />
-              </View>
-            </View>
-          </TouchableOpacity>
+            <Icon
+              name="tooth-outline"
+              size={120}
+              color="rgba(255,255,255,0.1)"
+              style={{ position: 'absolute', right: -20, bottom: -20 }}
+            />
 
-          {/* Card 2 */}
-          <TouchableOpacity
-            className="w-72 bg-white rounded-3xl mr-4 shadow-sm elevation-4"
-            activeOpacity={0.9}
-          >
-            <View className="p-4">
-              <View className="h-32 rounded-2xl justify-center items-center bg-pink-50">
-                <Icon name="calendar-check" size={48} color="#007AFF" />
-              </View>
-            </View>
-            <View className="px-4 pb-4">
-              <Text className="text-lg font-bold text-slate-900 mb-1">
-                Checkup Reminder
+            <View className="pr-12">
+              <Text className="text-white text-xl font-bold mb-2">
+                Need a checkup?
               </Text>
-              <Text className="text-sm text-slate-500 mb-3 leading-5">
-                Your next cleaning is in 2 weeks. Book now to secure your time.
+              <Text className="text-sky-100 text-sm font-medium leading-5 mb-6">
+                Book your next dental visit in seconds and manage your smile
+                journey.
               </Text>
-              <View className="flex-row justify-between items-center">
-                <Text className="text-sm text-blue-500 font-semibold">
-                  Schedule now
-                </Text>
-                <Icon name="arrow-right" size={18} color="#007AFF" />
-              </View>
             </View>
-          </TouchableOpacity>
 
-          {/* Card 3 */}
-          <TouchableOpacity
-            className="w-72 bg-white rounded-3xl mr-4 shadow-sm elevation-4"
-            activeOpacity={0.9}
-          >
-            <View className="p-4">
-              <View className="h-32 rounded-2xl justify-center items-center bg-green-50">
-                <Icon name="shield-check" size={48} color="#007AFF" />
-              </View>
+            <View className="bg-white/20 self-start px-5 py-3 rounded-2xl flex-row items-center">
+              <Text className="text-white font-bold mr-2">
+                Book Appointment
+              </Text>
+              <Icon name="arrow-right" size={18} color="#FFF" />
             </View>
-            <View className="px-4 pb-4">
-              <Text className="text-lg font-bold text-slate-900 mb-1">
-                Insurance Verified
-              </Text>
-              <Text className="text-sm text-slate-500 mb-3 leading-5">
-                Your coverage is active. View benefits and remaining balance.
-              </Text>
-              <View className="flex-row justify-between items-center">
-                <Text className="text-sm text-blue-500 font-semibold">
-                  Check coverage
-                </Text>
-                <Icon name="arrow-right" size={18} color="#007AFF" />
-              </View>
-            </View>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* APPOINTMENT CARD */}
-        <View className="bg-white mx-5 mt-6 p-5 rounded-3xl shadow-sm elevation-4">
-          <View className="flex-row justify-between items-center mb-4">
-            <View className="flex-row items-center gap-2">
-              <Icon name="calendar" size={22} color="#007AFF" />
-              <Text className="text-base font-semibold text-slate-900">
-                Upcoming Appointment
-              </Text>
-            </View>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Text className="text-sm text-blue-500 font-medium">
-                Reschedule
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="mb-5">
-            <View className="flex-row items-center mb-2">
-              <Text className="text-base font-bold text-slate-900">
-                Tomorrow
-              </Text>
-              <Text className="text-base text-slate-500 ml-1">• 10:30 AM</Text>
-            </View>
-            <Text className="text-base text-slate-900 font-medium mb-1">
-              Regular Checkup & Cleaning
-            </Text>
-            <Text className="text-sm text-slate-500">
-              with Dr. James Wilson • Main Clinic
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            className="bg-blue-500 flex-row items-center justify-center gap-2 py-3.5 rounded-2xl"
-            activeOpacity={0.7}
-          >
-            <Text className="text-white text-base font-semibold">
-              Prepare for visit
-            </Text>
-            <Icon name="arrow-right" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>
 
-        {/* RECOMMENDED PRODUCTS */}
-        <View className="flex-row justify-between items-center px-5 mt-8 mb-4">
-          <Text className="text-lg font-bold text-slate-900">
-            Recommended for you
+        {/* TEAM / SPECIALISTS */}
+        <View className="mb-8">
+          <Text className="text-lg font-bold text-slate-800 mb-4 px-6">
+            Meet Our Specialists
           </Text>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text className="text-sm text-blue-500 font-semibold">
-              Shop All
-            </Text>
-          </TouchableOpacity>
-        </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="ml-5"
-          contentContainerStyle={{ paddingRight: 20 }}
-        >
-          {[1, 2, 3].map(item => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+          >
+            {/* Doctor 1 */}
             <TouchableOpacity
-              key={item}
-              className="w-36 bg-white rounded-3xl p-3 mr-3 shadow-sm elevation-2"
               activeOpacity={0.8}
+              className="bg-white p-4 rounded-3xl mr-4 shadow-sm elevation-2 items-center w-36"
             >
-              <View className="h-24 bg-slate-100 rounded-2xl justify-center items-center mb-3">
-                {/* Fallback to 'flash' if 'toothbrush-electric' doesn't show */}
-                <Icon name="toothbrush-electric" size={32} color="#007AFF" />
-              </View>
-              <Text className="text-sm font-semibold text-slate-900 mb-1">
-                Electric Toothbrush
+              <Image
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=250&auto=format&fit=crop',
+                }}
+                className="w-16 h-16 rounded-full mb-3 border-2 border-slate-100 bg-slate-50"
+                resizeMode="cover"
+              />
+              <Text className="font-bold text-slate-800 text-center">
+                Dr. Wilson
               </Text>
-              <Text className="text-base font-bold text-blue-500 mb-2">
-                $89.99
+              <Text className="text-xs text-slate-500 text-center mt-1">
+                Orthodontics
               </Text>
-              <TouchableOpacity
-                className="bg-blue-500 w-9 h-9 rounded-full justify-center items-center self-end"
-                activeOpacity={0.7}
-              >
-                <Icon name="cart-plus" size={18} color="#FFF" />
-              </TouchableOpacity>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+
+            {/* Doctor 2 */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              className="bg-white p-4 rounded-3xl mr-4 shadow-sm elevation-2 items-center w-36"
+            >
+              <Image
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=250&auto=format&fit=crop',
+                }}
+                className="w-16 h-16 rounded-full mb-3 border-2 border-slate-100 bg-slate-50"
+                resizeMode="cover"
+              />
+              <Text className="font-bold text-slate-800 text-center">
+                Dr. Sarah
+              </Text>
+              <Text className="text-xs text-slate-500 text-center mt-1">
+                Oral Surgeon
+              </Text>
+            </TouchableOpacity>
+
+            {/* Doctor 3 */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              className="bg-white p-4 rounded-3xl mr-4 shadow-sm elevation-2 items-center w-36"
+            >
+              <Image
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=250&auto=format&fit=crop',
+                }}
+                className="w-16 h-16 rounded-full mb-3 border-2 border-slate-100 bg-slate-50"
+                resizeMode="cover"
+              />
+              <Text className="font-bold text-slate-800 text-center">
+                Dr. James
+              </Text>
+              <Text className="text-xs text-slate-500 text-center mt-1">
+                General Dentist
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* OUR SERVICES */}
+        <View className="px-5 mb-4">
+          <View className="flex-row justify-between items-center mb-4 ml-1">
+            <Text className="text-lg font-bold text-slate-800">
+              Our Services
+            </Text>
+            <TouchableOpacity>
+              <Text className="text-sm font-bold text-sky-500">See All</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row flex-wrap gap-2">
+            {clinicServices.map((service, index) => (
+              <View
+                key={index}
+                className="bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm"
+              >
+                <Text className="text-slate-700 text-xs font-semibold">
+                  {service}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

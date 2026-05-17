@@ -20,6 +20,7 @@ import {
   getServices,
   submitAppointment,
 } from '../../../app/api/patient';
+import { showInfo } from '../../../components/alert_message';
 
 // types
 import {
@@ -246,6 +247,14 @@ export default function BookAppointmentModal({
         serviceID: String(selectedService.service_id),
       });
 
+      showInfo({
+        title: 'Appointment Submitted',
+        message: 'Your appointment request has been submitted successfully.',
+        type: 'info',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+
       onSuccess();
       handleClose();
     } catch (e) {
@@ -258,7 +267,7 @@ export default function BookAppointmentModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 bg-slate-900/60 justify-end">
+      <View className="flex-1 justify-end">
         <SafeAreaView className="bg-white rounded-t-[32px] h-[95%] overflow-hidden shadow-lg">
           {/* Drag Handle Indicator */}
           <View className="items-center pt-3 pb-1">
@@ -374,7 +383,9 @@ export default function BookAppointmentModal({
 
                         <View className="flex-row flex-wrap gap-2">
                           {servicesByType[typeName].map(service => {
-                            const active = selectedService?.service_id === service.service_id;
+                            const active =
+                              selectedService?.service_id ===
+                              service.service_id;
 
                             return (
                               <TouchableOpacity
@@ -416,7 +427,8 @@ export default function BookAppointmentModal({
 
                     {filteredDentists.length === 0 ? (
                       <Text className="text-sm text-slate-500 italic ml-1">
-                        Please select a service first, or no dentists are available.
+                        Please select a service first, or no dentists are
+                        available.
                       </Text>
                     ) : (
                       filteredDentists.map(dentist => {
@@ -479,45 +491,54 @@ export default function BookAppointmentModal({
                                     No schedules available right now.
                                   </Text>
                                 ) : (
-                                  Object.entries(scheduleMap).map(([day, times]) => (
-                                    <View key={day} className="mb-5 last:mb-0">
-                                      <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-3">
-                                        {day}
-                                      </Text>
+                                  Object.entries(scheduleMap).map(
+                                    ([day, times]) => (
+                                      <View
+                                        key={day}
+                                        className="mb-5 last:mb-0"
+                                      >
+                                        <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-3">
+                                          {day}
+                                        </Text>
 
-                                      <View className="flex-row flex-wrap gap-2">
-                                        {times.map(time => {
-                                          const active = pickDay === day && pickTime === time;
+                                        <View className="flex-row flex-wrap gap-2">
+                                          {times.map(time => {
+                                            const active =
+                                              pickDay === day &&
+                                              pickTime === time;
 
-                                          return (
-                                            <TouchableOpacity
-                                              key={time}
-                                              activeOpacity={0.7}
-                                              onPress={() => {
-                                                setPickDay(day);
-                                                setPickTime(time);
-                                                setDate(null);
-                                                setError('');
-                                              }}
-                                              className={`px-4 py-2.5 rounded-xl border-2 ${
-                                                active
-                                                  ? 'bg-sky-500 border-sky-500'
-                                                  : 'bg-white border-slate-200'
-                                              }`}
-                                            >
-                                              <Text
-                                                className={`text-sm font-bold ${
-                                                  active ? 'text-white' : 'text-slate-600'
+                                            return (
+                                              <TouchableOpacity
+                                                key={time}
+                                                activeOpacity={0.7}
+                                                onPress={() => {
+                                                  setPickDay(day);
+                                                  setPickTime(time);
+                                                  setDate(null);
+                                                  setError('');
+                                                }}
+                                                className={`px-4 py-2.5 rounded-xl border-2 ${
+                                                  active
+                                                    ? 'bg-sky-500 border-sky-500'
+                                                    : 'bg-white border-slate-200'
                                                 }`}
                                               >
-                                                {time}
-                                              </Text>
-                                            </TouchableOpacity>
-                                          );
-                                        })}
+                                                <Text
+                                                  className={`text-sm font-bold ${
+                                                    active
+                                                      ? 'text-white'
+                                                      : 'text-slate-600'
+                                                  }`}
+                                                >
+                                                  {time}
+                                                </Text>
+                                              </TouchableOpacity>
+                                            );
+                                          })}
+                                        </View>
                                       </View>
-                                    </View>
-                                  ))
+                                    ),
+                                  )
                                 )}
                               </View>
                             )}
@@ -542,7 +563,9 @@ export default function BookAppointmentModal({
                               date ? 'text-slate-900' : 'text-slate-400'
                             }`}
                           >
-                            {date ? date.toLocaleDateString() : 'Pick a specific date...'}
+                            {date
+                              ? date.toLocaleDateString()
+                              : 'Pick a specific date...'}
                           </Text>
                           <Icon name="calendar" size={22} color="#94a3b8" />
                         </TouchableOpacity>
@@ -563,120 +586,191 @@ export default function BookAppointmentModal({
 
               {/* STEP 3 */}
               {step === 3 && (
-                <View className="space-y-7">
+                <View className="space-y-8">
+                  {/* Section Header */}
                   <View>
-                    <Text className="text-xl font-bold text-slate-800 mb-4">
+                    <Text className="text-2xl font-black text-slate-800 tracking-tight">
                       Review & Confirm
                     </Text>
+                    <Text className="text-sm font-medium text-slate-500 mt-1">
+                      Please verify your appointment details below.
+                    </Text>
+                  </View>
 
-                    <View className="bg-sky-50 border border-sky-100 rounded-3xl p-5 space-y-4">
-                      <View className="flex-row items-center">
-                        <View className="w-8 h-8 rounded-full bg-white items-center justify-center mr-3">
-                          <Icon name="clipboard-text-outline" size={16} color="#0ea5e9" />
-                        </View>
-                        <Text className="text-base font-bold text-slate-800 flex-1">
-                          {selectedService?.service_name || 'Service'}
+                  {/* Details Summary Card */}
+                  <View className="bg-white border border-slate-100 rounded-[28px] shadow-sm shadow-slate-100 overflow-hidden">
+                    {/* Service Row */}
+                    <View className="flex-row items-center p-5 border-b border-slate-50">
+                      <View className="w-10 h-10 rounded-full bg-sky-50 items-center justify-center mr-4 border border-sky-100">
+                        <Icon name="tooth-outline" size={20} color="#0ea5e9" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                          Service
+                        </Text>
+                        <Text className="text-base font-bold text-slate-800">
+                          {selectedService?.service_name || 'General Dentistry'}
                         </Text>
                       </View>
+                    </View>
 
-                      <View className="flex-row items-center">
-                        <View className="w-8 h-8 rounded-full bg-white items-center justify-center mr-3">
-                          <Icon name="account" size={16} color="#0ea5e9" />
-                        </View>
-                        <Text className="text-base font-medium text-slate-700 flex-1">
+                    {/* Dentist Row */}
+                    <View className="flex-row items-center p-5 border-b border-slate-50">
+                      <View className="w-10 h-10 rounded-full bg-indigo-50 items-center justify-center mr-4 border border-indigo-100">
+                        <Icon name="doctor" size={20} color="#6366f1" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                          Dentist
+                        </Text>
+                        <Text className="text-base font-bold text-slate-800">
                           {selectedDentist
                             ? `Dr. ${selectedDentist.first_name} ${selectedDentist.last_name}`
-                            : 'Dentist'}
+                            : 'Unassigned Dentist'}
                         </Text>
                       </View>
+                    </View>
 
-                      <View className="flex-row items-center">
-                        <View className="w-8 h-8 rounded-full bg-white items-center justify-center mr-3">
-                          <Icon name="calendar-clock" size={16} color="#0ea5e9" />
-                        </View>
-                        <Text className="text-base font-medium text-slate-700 flex-1">
-                          {date?.toLocaleDateString()} at {pickTime} ({pickDay})
+                    {/* Schedule Row */}
+                    <View className="flex-row items-center p-5 bg-slate-50/50">
+                      <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mr-4 border border-emerald-100">
+                        <Icon name="calendar-clock" size={20} color="#10b981" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                          Date & Time
+                        </Text>
+                        <Text className="text-base font-bold text-slate-800">
+                          {date?.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}{' '}
+                          • {pickTime}
+                        </Text>
+                        <Text className="text-sm font-medium text-slate-500 mt-0.5">
+                          {pickDay}
                         </Text>
                       </View>
                     </View>
                   </View>
 
-                  <View>
-                    <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 my-2 ml-1">
-                      Patient Type
-                    </Text>
-
-                    <View className="flex-row flex-wrap gap-2 my-2">
-                      {appointmentTypes.map(type => {
-                        const active = selectedAppointmentTypeId === type.id;
-
-                        return (
-                          <TouchableOpacity
-                            key={type.id}
-                            activeOpacity={0.7}
-                            onPress={() => setSelectedAppointmentTypeId(type.id)}
-                            className={`px-5 py-3.5 rounded-2xl border-2 flex-row items-center ${
-                              active
-                                ? 'bg-sky-500 border-sky-500'
-                                : 'bg-white border-slate-100'
-                            }`}
-                          >
-                            <Icon
-                              name={type.id === 2 ? 'account-group' : 'account'}
-                              size={18}
-                              color={active ? '#fff' : '#64748b'}
-                              className="mr-2"
-                            />
-                            <Text
-                              className={`text-sm font-bold ${
-                                active ? 'text-white' : 'text-slate-700'
+                  {/* Options Section */}
+                  <View className="space-y-6">
+                    {/* Patient Type */}
+                    <View>
+                      <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">
+                        Patient Type
+                      </Text>
+                      <View className="flex-row flex-wrap gap-3">
+                        {appointmentTypes.map(type => {
+                          const active = selectedAppointmentTypeId === type.id;
+                          return (
+                            <TouchableOpacity
+                              key={type.id}
+                              activeOpacity={0.7}
+                              onPress={() =>
+                                setSelectedAppointmentTypeId(type.id)
+                              }
+                              className={`flex-1 min-w-[140px] px-4 py-4 rounded-[20px] border-2 flex-row items-center justify-center shadow-sm ${
+                                active
+                                  ? 'bg-sky-500 border-sky-500 shadow-sky-500/30'
+                                  : 'bg-white border-slate-100 shadow-slate-50'
                               }`}
                             >
-                              {type.appointment_name}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
+                              <Icon
+                                name={
+                                  type.id === 2 ? 'account-group' : 'account'
+                                }
+                                size={20}
+                                color={active ? '#fff' : '#64748b'}
+                                className="mr-2.5"
+                              />
+                              <Text
+                                className={`text-sm font-bold ${
+                                  active ? 'text-white' : 'text-slate-700'
+                                }`}
+                              >
+                                {type.appointment_name}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
                     </View>
-                  </View>
 
-                  <View className="bg-white border border-slate-200 rounded-[24px] p-5 flex-row items-center justify-between">
+                    {/* Emergency Toggle Card */}
+                    <View className="bg-white border border-slate-100 rounded-[24px] p-5 flex-row items-center justify-between shadow-sm shadow-slate-50">
+                      <View className="flex-row items-center flex-1 pr-4">
+                        <View className="w-10 h-10 bg-rose-50 rounded-full items-center justify-center mr-3 border border-rose-100">
+                          <Icon
+                            name="alert-plus-outline"
+                            size={20}
+                            color="#f43f5e"
+                          />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-base font-bold text-slate-800">
+                            Emergency Visit
+                          </Text>
+                          <Text className="text-sm font-medium text-slate-500 mt-0.5 leading-5">
+                            Flag this booking as urgent
+                          </Text>
+                        </View>
+                      </View>
+                      <Switch
+                        value={isEmergency}
+                        onValueChange={setIsEmergency}
+                        trackColor={{ true: '#0ea5e9', false: '#e2e8f0' }}
+                        thumbColor={
+                          Platform.OS === 'android' ? '#fff' : undefined
+                        }
+                      />
+                    </View>
+
+                    {/* Additional Notes */}
                     <View>
-                      <Text className="text-base font-bold text-slate-800">
-                        Emergency Visit
+                      <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">
+                        Additional Notes (Optional)
                       </Text>
-                      <Text className="text-sm text-slate-500 mt-0.5">
-                        Is this booking urgent?
-                      </Text>
+                      <TextInput
+                        className="bg-white border border-slate-200 rounded-[24px] px-5 py-4 min-h-[120px] text-base text-slate-900 shadow-sm shadow-slate-50"
+                        placeholder="Symptoms, concerns, or special requests..."
+                        placeholderTextColor="#94a3b8"
+                        value={message}
+                        onChangeText={setMessage}
+                        multiline
+                        textAlignVertical="top"
+                      />
                     </View>
-                    <Switch
-                      value={isEmergency}
-                      onValueChange={setIsEmergency}
-                      trackColor={{ true: '#0ea5e9', false: '#cbd5e1' }}
-                    />
                   </View>
 
-                  <View>
-                    <Text className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-3 ml-1">
-                      Additional Notes (Optional)
-                    </Text>
-                    <TextInput
-                      className="bg-slate-50 border border-slate-200 rounded-[24px] px-5 py-4 min-h-[120px] text-base text-slate-900"
-                      placeholder="Symptoms, concerns, or special requests..."
-                      placeholderTextColor="#94a3b8"
-                      value={message}
-                      onChangeText={setMessage}
-                      multiline
-                      textAlignVertical="top"
-                    />
-                  </View>
+                  {/* Error Display */}
+                  {error ? (
+                    <View className="bg-rose-50 border border-rose-100 rounded-[20px] px-5 py-4 flex-row items-center mt-2">
+                      <Icon
+                        name="alert-circle-outline"
+                        size={20}
+                        color="#e11d48"
+                        className="mr-3"
+                      />
+                      <Text className="text-rose-600 font-bold flex-1 leading-5 text-sm">
+                        {error}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               )}
 
               {/* Error Display */}
               {error ? (
                 <View className="mt-6 bg-rose-50 border border-rose-100 rounded-2xl px-5 py-4 flex-row items-center">
-                  <Icon name="alert-circle-outline" size={20} color="#e11d48" className="mr-3" />
+                  <Icon
+                    name="alert-circle-outline"
+                    size={20}
+                    color="#e11d48"
+                    className="mr-3"
+                  />
                   <Text className="text-rose-600 font-semibold flex-1 leading-5">
                     {error}
                   </Text>
@@ -719,7 +813,9 @@ export default function BookAppointmentModal({
 
                   if (step === 2) {
                     if (!canContinue) {
-                      setError('Please complete service, dentist, time, and date.');
+                      setError(
+                        'Please complete service, dentist, time, and date.',
+                      );
                       return;
                     }
                     setError('');

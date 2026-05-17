@@ -16,6 +16,9 @@ import { useNavigation } from '@react-navigation/native';
 import { ROUTES, IMG } from '../../utils';
 import { RegisterUser } from '../../app/api/auth';
 
+// alert
+import { showSuccess } from '../../components/alert_message';
+
 export default function Register() {
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
@@ -40,14 +43,37 @@ export default function Register() {
       !form.first_name ||
       !form.last_name ||
       !form.email ||
-      !form.password
+      !form.password ||
+      !form.contact_no
     ) {
-      Alert.alert('Missing Fields', 'Please fill out all required fields.');
+      showSuccess({
+        title: 'Missing Fields',
+        message: 'Please fill out all required fields',
+        type: 'error',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       return;
     }
-
+    console.log('form is', form);
+    if(form.contact_no.trim().length !== 11 || !/^\d+$/.test(form.contact_no.trim())) {
+      showSuccess({
+        title: 'Invalid Contact Number',
+        message: 'Contact number must be 11 digits and contain only numbers',
+        type: 'error',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return;
+    }
     if (form.password.trim() !== form.confPassword.trim()) {
-      Alert.alert('Password Mismatch', 'Passwords do not match!');
+      showSuccess({
+        title: 'Password Mismatch',
+        message: 'Password and Confirm Password do not match',
+        type: 'error',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       return;
     }
 
@@ -56,12 +82,12 @@ export default function Register() {
     const created_at = new Date().toISOString();
 
     const payload: RegisterDOT = {
-      email: form.email,
-      password: form.password,
-      username: form.username,
-      first_name: form.first_name,
-      last_name: form.last_name,
-      contact_no: form.contact_no,
+      email: form.email.trim(),
+      password: form.password.trim(),
+      username: form.username.trim(),
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      contact_no: form.contact_no.trim(),
       created_at,
     };
 
@@ -70,13 +96,22 @@ export default function Register() {
     setIsLoading(false);
 
     if (!res || res.status !== 'ok') {
-      Alert.alert(
-        'Failed to Register',
-        res.error || 'Failed to register account. Please try again later.',
-      );
+      showSuccess({
+        title: 'Registration Failed',
+        message: 'Please try again',
+        type: 'success',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       return;
     } else {
-      Alert.alert('Registration Complete', 'Registered account successfully.');
+      showSuccess({
+        title: 'Registered Complete',
+        message: 'check your email to verify your account',
+        type: 'success',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       navigation.navigate(ROUTES.LOGIN);
     }
   };

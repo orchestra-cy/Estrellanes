@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ActivityIndicator, SafeAreaView, View } from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Upgraded Safe Area
 
 import {
   fetchDentistAppointments,
@@ -18,6 +19,7 @@ import { wsManager } from '../../utils/WebsocketManager';
 
 // types
 import type { WebSocketMessage } from '../../types/websockets.types';
+import { showInfo } from '../../components/alert_message';
 
 import AppointmentDetailsModal from './appointments/components/AppointmentDetailsModal';
 import AppointmentList from './appointments/components/AppointmentList';
@@ -236,6 +238,15 @@ export default function DentistAppointmentsScreen() {
           ),
         );
         setSelectedAppointment(prev => (prev ? { ...prev, status } : prev));
+
+        const statusLabel = status?.toLowerCase?.() || 'updated';
+        showInfo({
+          title: 'Appointment Updated',
+          message: `Appointment ${statusLabel} successfully.`,
+          type: 'info',
+          position: 'top',
+          visibilityTime: 3000,
+        });
       }
     } finally {
       setIsUpdatingStatus(false);
@@ -253,27 +264,38 @@ export default function DentistAppointmentsScreen() {
       const response = hasExistingReminders
         ? await updateReminder(selectedAppointment.id, draftReminders)
         : await saveReminder(draftReminders, selectedAppointment.id);
-      if (response?.status === 'success' || response?.status === 'ok')
+      if (response?.status === 'success' || response?.status === 'ok') {
         setIsReminderModalOpen(false);
+
+        showInfo({
+          title: hasExistingReminders ? 'Reminders Updated' : 'Reminders Saved',
+          message: hasExistingReminders
+            ? 'Your reminders have been updated successfully.'
+            : 'Your reminders have been saved successfully.',
+          type: 'info',
+          position: 'top',
+          visibilityTime: 3000,
+        });
+      }
     } finally {
       setIsSavingReminder(false);
     }
   };
 
+  // Upgraded Premium Loading State
   if (isLoading && !isRefreshing) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-        <View
-          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-        >
-          <ActivityIndicator size="large" color="#0ea5e9" />
-        </View>
+      <SafeAreaView className="flex-1 bg-slate-50 justify-center items-center">
+        <ActivityIndicator size="large" color="#0ea5e9" />
+        <Text className="mt-4 text-slate-500 font-bold tracking-wide">
+          Loading Appointments...
+        </Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+    <SafeAreaView className="flex-1 bg-slate-50">
       <AppointmentList
         appointments={appointments}
         refreshing={isRefreshing}
