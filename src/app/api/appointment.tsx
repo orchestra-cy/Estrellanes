@@ -37,7 +37,7 @@ export async function FetchAppointment() {
     }
 
     const data = await res.json();
-    console.log("Appointment data:", data);
+    console.log('Appointment data:', data);
     return data;
   } catch (error) {
     console.log('FetchAppointment error:', error);
@@ -46,7 +46,7 @@ export async function FetchAppointment() {
 }
 
 export async function fetchHistory({ userID, role }: HistoryDOT) {
-  console.log("fetching history")
+  console.log('fetching history');
   const url = `${BaseUrl}/get-history`;
   try {
     const token = await getToken();
@@ -60,7 +60,7 @@ export async function fetchHistory({ userID, role }: HistoryDOT) {
     });
 
     if (!res.ok) {
-        throw new Error(`fetchHistory failed with status ${res.status}`);
+      throw new Error(`fetchHistory failed with status ${res.status}`);
     }
 
     const data = await res.json();
@@ -68,5 +68,45 @@ export async function fetchHistory({ userID, role }: HistoryDOT) {
   } catch (error) {
     console.log('fetchHistory error:', error);
     return { status: 'error', data: [] };
+  }
+}
+
+export default async function DeleteAppointmentAPI(
+  appointmentID: string | null,
+) {
+  console.log('Appointment id is: ' + appointmentID);
+
+  if (!appointmentID) {
+    console.log('No appointment ID provided.');
+    return { status: 'error', message: 'No appointment ID provided' };
+  }
+
+  const url = `${BaseUrl}/delete-appointment`;
+
+  try {
+    const token = await getToken();
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ appointmentID }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`DeleteAppointmentAPI failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log('Delete appointment response data:', data);
+    return data;
+  } catch (error) {
+    console.log('DeleteAppointmentAPI error:', error);
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'An error occurred',
+    };
   }
 }
