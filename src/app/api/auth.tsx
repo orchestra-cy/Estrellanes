@@ -5,7 +5,7 @@ export async function UserLogin({ username, password }: LoginDOT) {
   const url = `${BaseUrl}/login-auth`;
 
   try {
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -13,22 +13,13 @@ export async function UserLogin({ username, password }: LoginDOT) {
       },
       body: JSON.stringify({ username, password }),
     });
-    console.log('api/auth response: ', res);
 
-    if (res.ok === false) {
-      throw new Error(`Login failed with status ${res.status}`);
+    const res = await response.json();
+    console.log("response is",res)
+    const token = res?.token || null;
+    if (res.code === 401) { 
+      return { ok: false, status: res.code, token: null, error: res.message };
     }
-
-    let data = null;
-    try {
-      data = await res.json();
-      console.log(data);
-    } catch (e) {
-      console.log(e)
-    }
-
-    const token = data?.token || null;
-
     return { ok: true, status: res.status, token };
   } catch (error) {
     console.log('UserLogin error:', error);
@@ -36,7 +27,7 @@ export async function UserLogin({ username, password }: LoginDOT) {
       ok: false,
       status: null,
       data: null,
-      error: error?.message || String(error),
+      error: error.message || String(error),
     };
   }
 }
@@ -81,20 +72,20 @@ export async function RegisterUser(
         Accept: 'application/json',
       },
       body: JSON.stringify({
-        email,
-        password,
-        username,
-        first_name,
-        last_name,  
+        email:email.trim(),
+        password:password.trim(),
+        username:username.trim(),
+        first_name:first_name.trim(),
+        last_name:last_name.trim(),  
         created_at,
       }),
     });
-
+    console.log('api/auth register response: ', res);
     let data = null;
     try {
       data = await res.json();
       console.log('data register: ', data);
-    } catch (e) {}
+    } catch (e) {console.log(e)}
 
     if (res.ok === false) {
       return { status: 'error', data };
