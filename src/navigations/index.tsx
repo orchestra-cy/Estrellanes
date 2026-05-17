@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './navigationRef';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 import MainNavigation from './MainNav';
 import DentistNavigation from './DentistNav';
 import AuthNav from './auth/AuthNav';
@@ -21,8 +24,8 @@ import { showSuccess } from '../components/alert_message';
 import { UserInfoDOT } from '../types/api.auth.types';
 import { WebSocketMessage } from '../types/websockets.types';
 
-// function 
-import { authLogout } from '../app/action';
+// function
+import { authLogout, authSetUserInfo } from '../app/action';
 import { useDispatch } from 'react-redux';
 const { store, persistor, runSaga } = configureStore();
 runSaga(rootSaga);
@@ -37,7 +40,6 @@ interface RootState {
 }
 
 type Role = 'DENTIST' | 'PATIENT';
-
 
 const normalizeRole = (roles?: string[] | string | null): Role | null => {
   if (!roles) return null;
@@ -85,7 +87,7 @@ function GateContent() {
 
   // authentication studd
   const dispatch = useDispatch();
-  
+
   // get user
   useEffect(() => {
     if (!hasAuth) {
@@ -108,6 +110,9 @@ function GateContent() {
         if (info?.code == 401) {
           dispatch(authLogout());
           return;
+        }
+        if (info?.user) {
+          dispatch(authSetUserInfo(info.user));
         }
         setFetchedRole(normalizeRole(info?.user?.roles));
       })
@@ -151,7 +156,7 @@ function GateContent() {
     };
   }, []);
 
-  // websocket auto-connect and disconnect 
+  // websocket auto-connect and disconnect
   useEffect(() => {
     let unsubscribeNotification: (() => void) | undefined;
     let unsubscribeConnected: (() => void) | undefined;
@@ -193,11 +198,10 @@ function GateContent() {
       unsubscribeConnected = wsManager.on('connected', () =>
         console.log('WebSocket Connected'),
       );
-      
+
       unsubscribeDisconnected = wsManager.on('disconnected', () =>
         console.log('WebSocket Disconnected'),
       );
-      
     } catch (error) {
       console.error('WebSocket error:', error);
     }
@@ -208,7 +212,7 @@ function GateContent() {
       unsubscribeDisconnected?.();
       wsManager.disconnect();
     };
-  }, [authToken]); 
+  }, [authToken]);
 
   if (hasAuth && (!activeRole || isFetchingRole)) {
     return (
@@ -229,7 +233,7 @@ function GateContent() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <CurrentNavigator />
     </NavigationContainer>
   );
@@ -237,19 +241,26 @@ function GateContent() {
 
 export default function AppNav() {
   return (
-    <Provider store={store}>
-      <PersistGate
-        persistor={persistor}
-        loading={
-          <View
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
-          >
-            <ActivityIndicator size="large" />
-          </View>
-        }
-      >
-        <GateContent />
-      </PersistGate>
-    </Provider>
+    <SafeAreaProvider>
+      <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
+      <Provider store={store}>
+        <PersistGate
+          persistor={persistor}
+          loading={
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ActivityIndicator size="large" />
+            </View>
+          }
+        >
+          <GateContent />
+        </PersistGate>
+      </Provider>
+    </SafeAreaProvider>
   );
 }

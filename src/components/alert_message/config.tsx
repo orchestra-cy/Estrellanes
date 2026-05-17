@@ -1,89 +1,82 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-message';
+import { ToastConfig, ToastProps } from 'react-native-toast-message';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const toastBaseStyle = {
-  borderLeftWidth: 0,
-  minHeight: 64,
-  height: 'auto' as const,
-  paddingVertical: 10,
-};
-
-const text1Style = {
-  fontSize: 14,
-  fontWeight: '700' as const,
-};
-
-const text2Style = {
-  fontSize: 13,
-  lineHeight: 18,
-  color: '#475569',
-};
-
-const toastConfig: ToastConfig = {
-  success: (props) => (
-    <BaseToast
-      {...props}
-      style={{
-        ...toastBaseStyle,
-        backgroundColor: '#ecfdf5',
-        borderColor: '#10b981',
-      }}
-      contentContainerStyle={{ paddingHorizontal: 12 }}
-      text1Style={{ ...text1Style, color: '#065f46' }}
-      text2Style={text2Style}
-    />
-  ),
-
-  error: (props) => (
-    <ErrorToast
-      {...props}
-      style={{
-        ...toastBaseStyle,
-        backgroundColor: '#fef2f2',
-        borderColor: '#ef4444',
-      }}
-      contentContainerStyle={{ paddingHorizontal: 12 }}
-      text1Style={{ ...text1Style, color: '#991b1b' }}
-      text2Style={{ ...text2Style, color: '#7f1d1d' }}
-    />
-  ),
-
-  info: (props) => (
-    <View
-      style={{
-        width: '92%',
-        backgroundColor: '#eff6ff',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#60a5fa',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        justifyContent: 'center',
-      }}
-    >
-      <Text
-        style={{
-          fontSize: 14,
-          fontWeight: '700',
-          color: '#1e3a8a',
-          marginBottom: props.text2 ? 4 : 0,
-        }}
-      >
+// A shared base layout for all toasts to ensure perfect consistency
+const ToastCard = ({ 
+  props, 
+  iconName, 
+  iconColor, 
+  bgClass, 
+  borderClass 
+}: { 
+  props: ToastProps; 
+  iconName: string; 
+  iconColor: string; 
+  bgClass: string; 
+  borderClass: string;
+}) => (
+  <View className="w-[92%] bg-white rounded-[20px] shadow-lg shadow-slate-200/50 elevation-10 border border-slate-100 flex-row items-center p-4">
+    {/* Colored Icon Badge */}
+    <View className={`w-10 h-10 rounded-full ${bgClass} ${borderClass} border items-center justify-center mr-3`}>
+      <Icon name={iconName} size={22} color={iconColor} />
+    </View>
+    
+    {/* Text Content */}
+    <View className="flex-1 justify-center">
+      <Text className="text-sm font-extrabold text-slate-800 tracking-wide">
         {props.text1}
       </Text>
       {!!props.text2 && (
-        <Text
-          style={{
-            fontSize: 13,
-            lineHeight: 18,
-            color: '#1e40af',
-          }}
-        >
+        <Text className="text-xs font-medium text-slate-500 mt-0.5 leading-4">
           {props.text2}
         </Text>
       )}
     </View>
+  </View>
+);
+
+const toastConfig: ToastConfig = {
+  success: (props) => (
+    <ToastCard 
+      props={props}
+      iconName="check-circle"
+      iconColor="#10b981" // emerald-500
+      bgClass="bg-emerald-50"
+      borderClass="border-emerald-100"
+    />
+  ),
+
+  error: (props) => (
+    <ToastCard 
+      props={props}
+      iconName="alert-circle"
+      iconColor="#f43f5e" // rose-500
+      bgClass="bg-rose-50"
+      borderClass="border-rose-100"
+    />
+  ),
+
+  info: (props) => (
+    <ToastCard 
+      props={props}
+      iconName="information"
+      iconColor="#0ea5e9" // sky-500
+      bgClass="bg-sky-50"
+      borderClass="border-sky-100"
+    />
+  ),
+
+  // You can even add custom types easily now, like a warning!
+  warning: (props) => (
+    <ToastCard 
+      props={props}
+      iconName="alert"
+      iconColor="#f59e0b" // amber-500
+      bgClass="bg-amber-50"
+      borderClass="border-amber-100"
+    />
   ),
 };
 

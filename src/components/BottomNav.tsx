@@ -1,91 +1,131 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { safeNavigate } from '../navigations/navigationRef';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ROUTES } from '../utils';
 
+const tabs = [
+  {
+    key: 'home',
+    icon: 'home-outline',
+    route: ROUTES.HOME,
+  },
+  {
+    key: 'schedule',
+    icon: 'calendar-blank-outline',
+    route: ROUTES.APPOINTMENTS,
+  },
+  {
+    key: 'history',
+    icon: 'clock-time-four-outline',
+    route: ROUTES.HISTORY,
+  },
+  {
+    key: 'profile',
+    icon: 'account-outline',
+    route: ROUTES.PROFILE,
+  },
+];
+
+const PRIMARY = '#2563eb';
+
 export default function BottomNav() {
-  const navigation = useNavigation();
+  const [activeTab, setActiveTab] = useState('home');
+
+  const handlePress = tab => {
+    setActiveTab(tab.key);
+    safeNavigate(tab.route);
+  };
 
   return (
-    <SafeAreaView style={styles.wrapper}>
-      <View style={styles.container}>
-        <TouchableOpacity
-          style={styles.tab}
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate(ROUTES.HOME)}
-        >
-          <Icon name="home-outline" size={28} color="#64748b" />
-          <Text style={styles.label}>Home</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.wrapper}>
+        <View style={styles.container}>
+          {tabs.map(tab => {
+            const isActive = activeTab === tab.key;
 
-        <TouchableOpacity
-          style={styles.tab}
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate(ROUTES.APPOINTMENTS)}
-        >
-          <Icon name="calendar-blank-outline" size={28} color="#64748b" />
-          <Text style={styles.label}>Schedule</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.tab}
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate(ROUTES.HISTORY)}
-        >
-          <Icon name="clock-time-four-outline" size={28} color="#64748b" />
-          <Text style={styles.label}>History</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.tab}
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate(ROUTES.PROFILE)}
-        >
-          <Icon name="account-outline" size={28} color="#64748b" />
-          <Text style={styles.label}>Profile</Text>
-        </TouchableOpacity>
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                activeOpacity={0.8}
+                style={styles.tab}
+                onPress={() => handlePress(tab)}
+              >
+                <View
+                  style={[
+                    styles.iconContainer,
+                    isActive && styles.activeIconContainer,
+                  ]}
+                >
+                  <Icon
+                    name={tab.icon}
+                    size={isActive ? 32 : 28}
+                    color={isActive ? '#ffffff' : '#94a3b8'}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    // Added soft shadow for a seamless, floating effect
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 8, 
+  safeArea: {
+    backgroundColor: 'transparent',
   },
+
+  wrapper: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+  },
+
   container: {
     flexDirection: 'row',
-    height: 70, // Slightly taller for better touch targets
-    justifyContent: 'space-around',
+    backgroundColor: '#ffffff',
+    height: 82,
+    borderRadius: 28,
     alignItems: 'center',
-    paddingHorizontal: 8,
+    justifyContent: 'space-around',
+    paddingHorizontal: 10,
+
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 10,
   },
+
   tab: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingVertical: 8,
   },
-  label: {
-    fontSize: 11,
-    color: '#64748b', // Modern slate gray
-    marginTop: 4,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+
+  activeIconContainer: {
+    backgroundColor: PRIMARY,
+    borderRadius: 999,
+
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
   },
 });
