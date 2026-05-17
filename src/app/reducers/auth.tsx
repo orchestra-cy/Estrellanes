@@ -3,6 +3,7 @@ import {
   USER_LOGIN_SUCCESS,
   USER_LOGIN_FAILURE,
   USER_LOGOUT,
+  USER_INFO_SUCCESS,
 } from '../action';
 
 import {
@@ -63,6 +64,14 @@ export default function authReducer(
         error: errorMessage,
       };
     }
+
+    case USER_INFO_SUCCESS: {
+      return {
+        ...state,
+        userData: action.payload || null,
+      };
+    }
+
     // custom
     case USER_LOGOUT: {
       return {

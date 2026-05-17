@@ -6,11 +6,13 @@ import {
   USER_LOGIN_FAILURE,
   USER_LOGIN_GOOGLE,
   USER_LOGOUT,
+  USER_INFO_SUCCESS,
 } from '../action';
 import { UserLogin } from '../api/auth';
+import { GetUserInfo } from '../api/user';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { LoginDOT } from '../../types/api.auth.types';
+import { LoginDOT, UserInfoDOT } from '../../types/api.auth.types';
 import {
   UserLoginGoogleAction,
   UserLoginAction,
@@ -31,11 +33,20 @@ export function* userLoginAsync(action: UserLoginAction) {
     //   ok: true,
     //   status: 200,
     //   token: "test",
-    //   error: "", 
+    //   error: "",
     // }
-    
+
     console.log('the result is', result);
     if (result) {
+      if (result.status !== 200) { 
+        showSuccess({
+          title: 'Login Error',
+          message: result.error,
+          type: 'error',
+          position: 'top',
+          visibilityTime: 3000,
+        });
+      }
       if (result.ok === true) {
         showSuccess({
           title: 'Login Successfull',
@@ -48,8 +59,28 @@ export function* userLoginAsync(action: UserLoginAction) {
         console.log('Login successful, payload:', result.token);
         console.log('USER_LOGIN_SUCCESS');
         yield put({ type: USER_LOGIN_SUCCESS, payload });
+
+        try {
+          const info: UserInfoDOT = yield call(GetUserInfo, result.token);
+          if (info?.user) {
+            yield put({ type: USER_INFO_SUCCESS, payload: info.user });
+          }
+        } catch (error) {
+          console.log('GetUserInfo after login failed:', error);
+        }
+
         return;
       } else {
+        showSuccess({
+          title: 'Login Error',
+          message: result.error,
+          type: 'error',
+          position: 'top',
+          visibilityTime: 3000,
+        });
+        if (action.payload.onComplete) {
+          action.payload.onComplete();
+        }
         console.log('USER_LOGIN_FAILURE');
       }
 
@@ -98,6 +129,15 @@ export function* userLoginGoogleAsync(action: UserLoginGoogleAction) {
 
     const payload = { token };
     yield put({ type: USER_LOGIN_SUCCESS, payload });
+
+    try {
+      const info: UserInfoDOT = yield call(GetUserInfo, token);
+      if (info?.user) {
+        yield put({ type: USER_INFO_SUCCESS, payload: info.user });
+      }
+    } catch (error) {
+      console.log('GetUserInfo after Google login failed:', error);
+    }
   } catch (error) {
     yield put({
       type: USER_LOGIN_FAILURE,
