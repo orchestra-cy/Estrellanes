@@ -203,7 +203,7 @@ function GateContent() {
         console.log('WebSocket Disconnected'),
       );
     } catch (error) {
-      console.error('WebSocket error:', error);
+      // console.error('WebSocket error:', error);
     }
 
     return () => {

@@ -232,10 +232,18 @@ export default function BookAppointmentModal({
       return;
     }
 
+    // Prevent duplicate submissions
+    if (loading) {
+      return;
+    }
+
     const formattedDate = date.toLocaleDateString('en-CA');
     const composedMessage = message.trim();
 
     try {
+      setLoading(true);
+      setError('');
+
       await submitAppointment({
         dentistID: String(pickDentist),
         day: pickDay,
@@ -260,6 +268,8 @@ export default function BookAppointmentModal({
     } catch (e) {
       console.error(e);
       setError((e as Error)?.message || 'Failed to submit appointment.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -800,6 +810,7 @@ export default function BookAppointmentModal({
 
               <TouchableOpacity
                 activeOpacity={0.8}
+                disabled={loading}
                 onPress={() => {
                   if (step === 1) {
                     if (bookingMethod !== 'self') {
@@ -827,11 +838,15 @@ export default function BookAppointmentModal({
                     handleSubmit();
                   }
                 }}
-                className="flex-1 bg-sky-500 rounded-2xl py-4 items-center justify-center"
+                className={`flex-1 rounded-2xl py-4 items-center justify-center ${loading ? 'bg-sky-300' : 'bg-sky-500'}`}
               >
-                <Text className="font-bold text-white tracking-wide text-base">
-                  {step === 3 ? 'Confirm Visit' : 'Next Step'}
-                </Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="font-bold text-white tracking-wide text-base">
+                    {step === 3 ? 'Confirm Visit' : 'Next Step'}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           )}

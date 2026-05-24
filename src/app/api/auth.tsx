@@ -1,5 +1,5 @@
 import { LoginDOT,RegisterDOT } from "../../types/api.auth.types";
-const BaseUrl = 'http://127.0.0.1:8000/api';
+const BaseUrl = 'https://toothalie-production.up.railway.app/api';
 
 export async function UserLogin({ username, password }: LoginDOT) {
   const url = `${BaseUrl}/login-auth`;

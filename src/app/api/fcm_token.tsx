@@ -1,4 +1,4 @@
-const BaseUrl = 'http://127.0.0.1:8000/api';
+const BaseUrl = 'https://toothalie-production.up.railway.app/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const getToken = async () => {

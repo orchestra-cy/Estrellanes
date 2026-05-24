@@ -137,7 +137,15 @@ export default function EditAppointmentModal({
       return;
     }
 
+    // Prevent duplicate submissions
+    if (loading) {
+      return;
+    }
+
     try {
+      setLoading(true);
+      setError('');
+
       await updateAppointment({
         appointmentID: appointmentId,
         scheduleID: selectedSchedule,
@@ -160,6 +168,8 @@ export default function EditAppointmentModal({
     } catch (e) {
       console.error(e);
       setError('Failed to update appointment.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -422,12 +432,17 @@ export default function EditAppointmentModal({
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSave}
-                className="flex-[1.5] bg-sky-500 rounded-[20px] py-4 items-center justify-center"
+                disabled={loading}
+                className={`flex-[1.5] rounded-[20px] py-4 items-center justify-center ${loading ? 'bg-sky-300' : 'bg-sky-500'}`}
                 activeOpacity={0.8}
               >
-                <Text className="text-white font-bold tracking-wide text-sm">
-                  Save Changes
-                </Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-white font-bold tracking-wide text-sm">
+                    Save Changes
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           )}

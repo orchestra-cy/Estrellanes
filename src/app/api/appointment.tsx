@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HistoryDOT } from '../../types/history.types';
 
-const BaseUrl = 'http://127.0.0.1:8000/api';
+const BaseUrl = 'https://toothalie-production.up.railway.app/api';
 
 const getToken = async () => {
   try {

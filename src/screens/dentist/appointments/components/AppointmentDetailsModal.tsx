@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import type { DentistAppointmentItem } from '../../../../types/dentist.types';
@@ -24,7 +25,10 @@ type Props = {
 const getStatusStyles = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'approved':
-      return { bg: 'bg-emerald-50 border-emerald-100', text: 'text-emerald-700' };
+      return {
+        bg: 'bg-emerald-50 border-emerald-100',
+        text: 'text-emerald-700',
+      };
     case 'rejected':
     case 'cancelled':
       return { bg: 'bg-rose-50 border-rose-100', text: 'text-rose-700' };
@@ -51,18 +55,16 @@ export default function AppointmentDetailsModal({
     >
       {/* Removed dark background, added relative positioning */}
       <View className="flex-1 justify-end relative">
-        
         {/* Invisible backdrop to allow tapping outside to close */}
         <Pressable className="absolute inset-0" onPress={onClose} />
 
         {/* Stronger shadow (elevation-24) to float above the screen */}
         <SafeAreaView className="bg-white rounded-t-[36px] max-h-[90%] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] elevation-24 flex-shrink">
-          
           {/* Drag Handle Indicator */}
           <View className="items-center pt-4 pb-2">
             <View className="w-12 h-1.5 bg-slate-200 rounded-full" />
           </View>
-          
+
           {/* Header */}
           <View className="flex-row justify-between items-center px-6 pb-4 border-b border-slate-50">
             <Text className="text-2xl font-black text-slate-800 tracking-tight">
@@ -84,7 +86,6 @@ export default function AppointmentDetailsModal({
           >
             {appointment && (
               <View className="space-y-5">
-                
                 {/* Top Status & Service */}
                 <View>
                   <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
@@ -93,16 +94,25 @@ export default function AppointmentDetailsModal({
                   <Text className="text-2xl font-extrabold text-slate-800 ml-1 mb-3">
                     {appointment.service_name || 'General Dentistry'}
                   </Text>
-                  
+
                   <View className="flex-row flex-wrap gap-2 ml-1">
-                    <View className={`px-3 py-1.5 rounded-xl border ${statusStyle?.bg}`}>
-                      <Text className={`text-xs font-extrabold uppercase tracking-wider ${statusStyle?.text}`}>
+                    <View
+                      className={`px-3 py-1.5 rounded-xl border ${statusStyle?.bg}`}
+                    >
+                      <Text
+                        className={`text-xs font-extrabold uppercase tracking-wider ${statusStyle?.text}`}
+                      >
                         {appointment.status || 'Pending'}
                       </Text>
                     </View>
                     {appointment.emergency && (
                       <View className="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-100 flex-row items-center">
-                        <Icon name="alert-circle" size={12} color="#e11d48" className="mr-1.5" />
+                        <Icon
+                          name="alert-circle"
+                          size={12}
+                          color="#e11d48"
+                          className="mr-1.5"
+                        />
                         <Text className="text-xs font-extrabold uppercase tracking-wider text-rose-600">
                           Urgent
                         </Text>
@@ -124,10 +134,12 @@ export default function AppointmentDetailsModal({
                       {appointment.patient_name}
                     </Text>
                     <Text className="text-xs font-medium text-slate-500 mb-0.5">
-                      <Icon name="phone" size={12} color="#94a3b8" /> {appointment.phone || 'No phone provided'}
+                      <Icon name="phone" size={12} color="#94a3b8" />{' '}
+                      {appointment.phone || 'No phone provided'}
                     </Text>
                     <Text className="text-xs font-medium text-slate-500">
-                      <Icon name="email" size={12} color="#94a3b8" /> {appointment.email || 'No email provided'}
+                      <Icon name="email" size={12} color="#94a3b8" />{' '}
+                      {appointment.email || 'No email provided'}
                     </Text>
                   </View>
                 </View>
@@ -204,18 +216,24 @@ export default function AppointmentDetailsModal({
                 onPress={() => onUpdateStatus('Rejected')}
                 activeOpacity={0.7}
                 className={`flex-1 py-4 rounded-[20px] items-center border-2 ${
-                  appointment.status === 'Rejected' 
-                    ? 'border-slate-100 bg-slate-50' 
+                  appointment.status === 'Rejected'
+                    ? 'border-slate-100 bg-slate-50'
                     : 'border-rose-100 bg-white'
                 }`}
               >
-                <Text
-                  className={`font-bold tracking-wide ${
-                    appointment.status === 'Rejected' ? 'text-slate-400' : 'text-rose-500'
-                  }`}
-                >
-                  Reject
-                </Text>
+                {isUpdating ? (
+                  <ActivityIndicator size="small" color="#e11d48" />
+                ) : (
+                  <Text
+                    className={`font-bold tracking-wide ${
+                      appointment.status === 'Rejected'
+                        ? 'text-slate-400'
+                        : 'text-rose-500'
+                    }`}
+                  >
+                    Reject
+                  </Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -223,18 +241,24 @@ export default function AppointmentDetailsModal({
                 onPress={() => onUpdateStatus('Approved')}
                 activeOpacity={0.8}
                 className={`flex-[1.5] py-4 rounded-[20px] items-center shadow-md ${
-                  appointment.status === 'Approved' 
-                    ? 'bg-emerald-100 border border-emerald-200 shadow-none' 
+                  appointment.status === 'Approved'
+                    ? 'bg-emerald-100 border border-emerald-200 shadow-none'
                     : 'bg-emerald-500 shadow-emerald-500/30'
                 }`}
               >
-                <Text
-                  className={`font-bold tracking-wide ${
-                    appointment.status === 'Approved' ? 'text-emerald-700' : 'text-white'
-                  }`}
-                >
-                  Approve
-                </Text>
+                {isUpdating ? (
+                  <ActivityIndicator size="small" color="#10b981" />
+                ) : (
+                  <Text
+                    className={`font-bold tracking-wide ${
+                      appointment.status === 'Approved'
+                        ? 'text-emerald-700'
+                        : 'text-white'
+                    }`}
+                  >
+                    Approve
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           )}
