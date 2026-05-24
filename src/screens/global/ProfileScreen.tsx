@@ -307,8 +307,6 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Development Tools */}
-        {__DEV__ && (
           <TouchableOpacity
             className="flex-row items-center justify-center mx-5 mt-8 p-4 bg-red-50 rounded-xl border border-red-100"
             onPress={handleLogout}
@@ -316,7 +314,6 @@ export default function ProfileScreen() {
             <Icon name="logout" size={20} color="#EF4444" />
             <Text className="text-red-500 font-bold ml-2">Logout</Text>
           </TouchableOpacity>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
