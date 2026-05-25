@@ -78,3 +78,6 @@ notes.txt
 TODO.md
 flow.md
 .env
+
+# Android signing (keep secrets out of git)
+android/keystore.properties
