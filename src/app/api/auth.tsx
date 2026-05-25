@@ -61,7 +61,7 @@ export async function RegisterUser(
     last_name,
     created_at,
   });
-  const BaseUrl = 'http://127.0.0.1:8000/api';
+  // const BaseUrl = 'http://127.0.0.1:8000/api';
   const url = `${BaseUrl}/register`;
   console.log('register api called');
   try {
