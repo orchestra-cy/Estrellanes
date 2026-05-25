@@ -210,7 +210,7 @@ class WebSocketManager {
 
 export const wsConfig = {
   development: {
-    url: 'ws://127.0.0.1:8086', // ← CHANGE THIS TO YOUR BACKEND IP
+    url: 'ws://10.0.2.2:8086', 
     debug: true,
   },
   staging: {
@@ -218,10 +218,12 @@ export const wsConfig = {
     debug: true,
   },
   production: {
-    url: 'wss://api.toothalie.com:8086',
+    // 1. Use wss://
+    // 2. Drop the :8086
+    url: 'wss://ws-server-production-d3f3.up.railway.app', 
     debug: false,
   },
 };
 
-// Export singleton instance
-export const wsManager = new WebSocketManager(wsConfig.development);
+// To test your new server right now, temporarily point the singleton to the production config:
+export const wsManager = new WebSocketManager(wsConfig.production);
