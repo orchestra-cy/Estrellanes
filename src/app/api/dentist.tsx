@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { BaseUrl } from './config';
 
 // types
-const BaseUrl = 'https://toothalie-production.up.railway.app/api';
 
 const getToken = async () => {
   try {
@@ -123,7 +122,6 @@ export async function updateDentistSchedule(
   }
 }
 
-
 export async function saveReminder(payload: ReminderPayloadDay[], id: string) {
   const url = `${BaseUrl}/save-reminder`;
   try {
@@ -176,7 +174,7 @@ export async function updateReminder(
   appointmentID: string,
   payload: ReminderPayloadDay[],
 ) {
-  console.log(appointmentID,payload)
+  console.log(appointmentID, payload);
   const url = `${BaseUrl}/update-reminder`;
   try {
     const token = await getToken();
@@ -189,8 +187,8 @@ export async function updateReminder(
       body: JSON.stringify({ id: String(appointmentID), payload }),
     });
     const data = await res.json();
-    console.log("Update Reminder Response:", data);
-    
+    console.log('Update Reminder Response:', data);
+
     return data;
   } catch (error) {
     console.log('updateReminder error:', error);
@@ -224,7 +222,7 @@ export async function getDentistServices() {
   const url = `${BaseUrl}/get-dentist-service`;
   try {
     const token = await getToken();
-    
+
     const res = await fetch(url, {
       method: 'POST',
       headers: {

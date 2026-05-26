@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const BaseUrl = 'https://toothalie-production.up.railway.app/api';
+import { BaseUrl } from './config';
 
 const getToken = async () => {
   try {

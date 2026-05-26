@@ -1,5 +1,5 @@
-import { LoginDOT,RegisterDOT } from "../../types/api.auth.types";
-const BaseUrl = 'https://toothalie-production.up.railway.app/api';
+import { LoginDOT, RegisterDOT } from '../../types/api.auth.types';
+import { BaseUrl } from './config';
 
 export async function UserLogin({ username, password }: LoginDOT) {
   const url = `${BaseUrl}/login-auth`;
@@ -15,9 +15,9 @@ export async function UserLogin({ username, password }: LoginDOT) {
     });
 
     const res = await response.json();
-    console.log("response is",res)
+    console.log('response is', res);
     const token = res?.token || null;
-    if (res.code === 401) { 
+    if (res.code === 401) {
       return { ok: false, status: res.code, token: null, error: res.message };
     }
     return { ok: true, status: res.status, token };
@@ -33,10 +33,10 @@ export async function UserLogin({ username, password }: LoginDOT) {
 }
 
 export async function google_auth_api(tokenID: string) {
-  const result = await fetch(BaseUrl + "/auth/google/mobile", {
-    method: "POST",
+  const result = await fetch(BaseUrl + '/auth/google/mobile', {
+    method: 'POST',
     headers: {
-      "Content-type": "application/json",
+      'Content-type': 'application/json',
     },
     body: JSON.stringify({
       tokenId: tokenID,
@@ -45,14 +45,14 @@ export async function google_auth_api(tokenID: string) {
   return result;
 }
 
-export async function RegisterUser(
-  { email,
-    password,
-    username,
-    first_name,
-    last_name,
-    created_at }: RegisterDOT
-) {
+export async function RegisterUser({
+  email,
+  password,
+  username,
+  first_name,
+  last_name,
+  created_at,
+}: RegisterDOT) {
   console.log('[API] Sending data to register: ', {
     email,
     password,
@@ -72,11 +72,11 @@ export async function RegisterUser(
         Accept: 'application/json',
       },
       body: JSON.stringify({
-        email:email.trim(),
-        password:password.trim(),
-        username:username.trim(),
-        first_name:first_name.trim(),
-        last_name:last_name.trim(),  
+        email: email.trim(),
+        password: password.trim(),
+        username: username.trim(),
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
         created_at,
       }),
     });
@@ -85,7 +85,9 @@ export async function RegisterUser(
     try {
       data = await res.json();
       console.log('data register: ', data);
-    } catch (e) {console.log(e)}
+    } catch (e) {
+      console.log(e);
+    }
 
     if (res.ok === false) {
       return { status: 'error', data };
